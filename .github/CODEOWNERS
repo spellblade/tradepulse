@@ -1,0 +1,12 @@
+# .github/CODEOWNERS
+# Code ownership definition for automated PR reviews and structural domain review routing
+
+# Default fallback owner for all files in the repository
+*                   @spellblade
+
+# Documentation updates
+/docs/**            @spellblade
+
+# CI/CD workflows and automated scripts require review
+.github/workflows/** @spellblade
+.github/**          @spellblade

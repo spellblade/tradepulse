@@ -1,0 +1,8 @@
+{
+  "name": "TradePulse - Real-Time Share Market & Intraday Trading App",
+  "description": "Real-time Indian equity and commodity market tracker across BSE, NSE, and MCX with interactive analytical charts, portfolio analytics, intraday trading terminal with automated target profit exit, and volatility alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

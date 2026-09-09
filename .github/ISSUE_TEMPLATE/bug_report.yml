@@ -1,0 +1,46 @@
+name: Bug Report
+description: Report something that is broken or behaving unexpectedly
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Thank you for reporting. Please fill out the fields below to help us isolate and fix the issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the bug is vs what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: List the exact steps to reproduce the bug.
+      placeholder: |
+        1. Open trading terminal
+        2. Enter limit order with target profit
+        3. See error or unexpected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Project Version
+      placeholder: "e.g., 0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
