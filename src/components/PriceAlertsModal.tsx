@@ -13,12 +13,25 @@ import {
 } from 'lucide-react';
 import { SymbolSearchCombobox } from './SymbolSearchCombobox';
 
+/**
+ * Props for the PriceAlertsModal threshold management dialog.
+ */
 interface PriceAlertsModalProps {
+  /** Modal open visibility state */
   isOpen: boolean;
+  /** Modal dismiss callback */
   onClose: () => void;
+  /** Active stock entities available for alert creation */
   stocks: StockSymbol[];
 }
 
+/**
+ * Custom price alert management modal allowing users to configure target price boundaries (ABOVE/BELOW)
+ * across BSE, NSE, and MCX assets with real-time threshold notifications.
+ *
+ * @param {PriceAlertsModalProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Modal configuration dialog or null when closed.
+ */
 export const PriceAlertsModal: React.FC<PriceAlertsModalProps> = ({
   isOpen,
   onClose,

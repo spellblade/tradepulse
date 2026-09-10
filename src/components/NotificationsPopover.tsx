@@ -12,13 +12,26 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 
+/**
+ * Props for the NotificationsPopover dropdown tray.
+ */
 interface NotificationsPopoverProps {
+  /** Popover open state */
   isOpen: boolean;
+  /** Popover close callback */
   onClose: () => void;
+  /** Notification alerts list */
   alerts: VolatilityAlert[];
+  /** Count of unacknowledged alerts */
   unreadCount: number;
 }
 
+/**
+ * Dropdown popover tray displaying volatility spikes, limit order fills, and auto-exit events.
+ *
+ * @param {NotificationsPopoverProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Dropdown notification menu or null when closed.
+ */
 export const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
   isOpen,
   onClose,

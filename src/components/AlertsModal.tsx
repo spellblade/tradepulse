@@ -15,12 +15,25 @@ import {
   Zap
 } from 'lucide-react';
 
+/**
+ * Props for the AlertsModal full-screen notification center dialog.
+ */
 interface AlertsModalProps {
+  /** Modal open visibility state */
   isOpen: boolean;
+  /** Modal dismiss callback */
   onClose: () => void;
+  /** Notification alerts list */
   alerts: VolatilityAlert[];
 }
 
+/**
+ * Full-screen modal notification manager allowing search, exchange filtering,
+ * and bulk acknowledgment of volatility events.
+ *
+ * @param {AlertsModalProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Interactive notification center or null when closed.
+ */
 export const AlertsModal: React.FC<AlertsModalProps> = ({
   isOpen,
   onClose,

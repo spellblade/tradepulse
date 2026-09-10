@@ -1,13 +1,26 @@
 import React from 'react';
 import { OHLCPoint } from '../types';
 
+/**
+ * Props for the MiniSparkline technical trend preview.
+ */
 interface MiniSparklineProps {
+  /** Historical OHLC candles providing the close prices */
   history?: OHLCPoint[];
+  /** SVG viewport pixel width */
   width?: number;
+  /** SVG viewport pixel height */
   height?: number;
+  /** Directional coloring: true = emerald bull, false = rose bear */
   isPositive?: boolean;
 }
 
+/**
+ * Compact SVG sparkline component rendering intraday micro-trends and gradient fills.
+ *
+ * @param {MiniSparklineProps} props - Render configuration.
+ * @returns {React.ReactElement} Scalable vector sparkline graph.
+ */
 export const MiniSparkline: React.FC<MiniSparklineProps> = ({
   history = [],
   width = 64,
@@ -25,7 +38,11 @@ export const MiniSparkline: React.FC<MiniSparklineProps> = ({
     );
   }
 
-  // Use the last 16 points
+  /*
+   * ARCHITECTURAL INTENT: SVG Path Coordinate Normalization
+   * Extracts closing prices from the most recent 16 points and maps them to normalized
+   * SVG canvas coordinates (x, y) with padding to prevent boundary clipping.
+   */
   const points = history.slice(-16);
   const closes = points.map((p) => p.close);
   const min = Math.min(...closes);

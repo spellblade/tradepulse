@@ -18,15 +18,31 @@ import {
 import { SymbolSearchCombobox } from './SymbolSearchCombobox';
 import { marketEngine } from '../services/marketEngine';
 
+/**
+ * Props for the PortfolioPanel investment management view.
+ */
 interface PortfolioPanelProps {
+  /** User investment holdings stored locally */
   holdings: PortfolioHolding[];
+  /** Live stock market prices for valuation recomputation */
   stocks: StockSymbol[];
+  /** Callback to inspect symbol on analytical chart */
   onSelectSymbol: (symbol: string) => void;
+  /** Callback to launch trade modal for holding */
   onOpenTrade: (symbol: string) => void;
+  /** Callback to add new portfolio holding */
   onAddHolding: (holding: Omit<PortfolioHolding, 'id'>) => void;
+  /** Callback to delete holding position */
   onRemoveHolding: (id: string) => void;
 }
 
+/**
+ * Real-time investment portfolio management panel displaying total asset valuation,
+ * invested vs. current capital, sector allocation breakdown, and manual position entry.
+ *
+ * @param {PortfolioPanelProps} props - Render configuration.
+ * @returns {React.ReactElement} Portfolio overview and holdings management dashboard.
+ */
 export const PortfolioPanel: React.FC<PortfolioPanelProps> = ({
   holdings,
   stocks,
@@ -40,7 +56,11 @@ export const PortfolioPanel: React.FC<PortfolioPanelProps> = ({
   const [newQuantity, setNewQuantity] = useState(10);
   const [newBuyPrice, setNewBuyPrice] = useState(200);
 
-  // Compute live portfolio metrics based on real-time stock ticks
+  /*
+   * ARCHITECTURAL INTENT: Real-Time Mark-To-Market Revaluation
+   * Enriches each persistent holding with live prices, current valuation, unrealized P&L,
+   * and single-day returns derived from streaming marketEngine ticks.
+   */
   const enrichedHoldings = holdings.map((h) => {
     const stock = stocks.find((s) => s.symbol === h.symbol);
     const livePrice = stock ? stock.currentPrice : h.avgBuyPrice;

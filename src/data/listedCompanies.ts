@@ -1,12 +1,25 @@
 import { StockSymbol, MarketExchange, OHLCPoint } from '../types';
 
-// Helper to generate realistic OHLC historical points with moving averages
+/**
+ * Generates synthetic realistic historical OHLC candle data points along with SMA-20
+ * and EMA-50 technical indicator overlays for an asset based on a starting reference price.
+ *
+ * @param {number} basePrice - Reference starting asset price in INR.
+ * @param {number} [pointsCount=40] - Total count of historical timeframe intervals to generate.
+ * @param {number} [volatility=0.015] - Volatility coefficient controlling high/low candle spread.
+ * @returns {OHLCPoint[]} Chronologically ordered array of OHLC points with technical indicator overlays.
+ */
 export function generateCandlesForPrice(basePrice: number, pointsCount: number = 40, volatility: number = 0.015): OHLCPoint[] {
   const points: OHLCPoint[] = [];
   let currentPrice = basePrice * (1 - (pointsCount * 0.002));
   const now = Date.now();
   const intervalMs = 60 * 1000;
 
+  /*
+   * ARCHITECTURAL INTENT: Synthetic OHLC Bar Construction
+   * Generates continuous price action backwards from now, creating open, close, high, low,
+   * and random volume allocations. Current price walks forward across intervals.
+   */
   for (let i = pointsCount - 1; i >= 0; i--) {
     const timestamp = now - (i * intervalMs);
     const date = new Date(timestamp);
@@ -32,6 +45,11 @@ export function generateCandlesForPrice(basePrice: number, pointsCount: number =
     });
   }
 
+  /*
+   * ARCHITECTURAL INTENT: Technical Indicator Overlays
+   * Calculates 20-period Simple Moving Average (SMA-20) and 50-period Exponential
+   * Moving Average (EMA-50) using smoothing multiplier k = 2 / (N + 1).
+   */
   for (let i = 0; i < points.length; i++) {
     const startIdx = Math.max(0, i - 19);
     const subset = points.slice(startIdx, i + 1);
@@ -49,19 +67,33 @@ export function generateCandlesForPrice(basePrice: number, pointsCount: number =
   return points;
 }
 
+/**
+ * Directory template schema for Indian equities and commodities across BSE, NSE, and MCX.
+ */
 export interface ListedCompanyTemplate {
+  /** Company or commodity ticker */
   symbol: string;
+  /** Full corporate name or contract description */
   name: string;
+  /** Primary market exchange */
   exchange: MarketExchange;
+  /** Sector classification */
   sector: string;
+  /** Baseline reference trading price in INR */
   basePrice: number;
+  /** Market capitalization string representation */
   marketCap: string;
+  /** Price-to-Earnings valuation ratio */
   peRatio: number;
+  /** Volatility swing index */
   volatilityIndex: number;
+  /** Optional commodity trading contract unit (e.g. '/ 10g') */
   unit?: string;
 }
 
-// Comprehensive verified directory of genuine BSE, NSE, and MCX listed companies and commodities
+/**
+ * Canonical verified directory of Indian equities and commodities across BSE, NSE, and MCX.
+ */
 export const LISTED_COMPANIES_DIRECTORY: ListedCompanyTemplate[] = [
   // --- NSE (National Stock Exchange) ---
   {
@@ -459,6 +491,13 @@ export const LISTED_COMPANIES_DIRECTORY: ListedCompanyTemplate[] = [
   },
 ];
 
+/**
+ * Instantiates a fully populated runtime `StockSymbol` instance from a static directory template,
+ * generating initial previous close, day range, volume metrics, and historical OHLC series.
+ *
+ * @param {ListedCompanyTemplate} template - Canonical static directory record.
+ * @returns {StockSymbol} Ready-to-simulate StockSymbol instance with indicators.
+ */
 export function instantiateStockFromTemplate(template: ListedCompanyTemplate): StockSymbol {
   const previousClose = Number((template.basePrice * (1 - (Math.random() * 0.02 - 0.01))).toFixed(2));
   const change = Number((template.basePrice - previousClose).toFixed(2));

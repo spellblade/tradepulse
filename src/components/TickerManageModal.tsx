@@ -4,17 +4,34 @@ import { LISTED_COMPANIES_DIRECTORY } from '../data/listedCompanies';
 import { marketEngine } from '../services/marketEngine';
 import { X, Search, Plus, Trash2, Check, AlertCircle, Sparkles, Filter } from 'lucide-react';
 
+/**
+ * Props for the TickerManageModal watchlist configurator.
+ */
 interface TickerManageModalProps {
+  /** Modal open visibility state */
   isOpen: boolean;
+  /** Modal dismiss callback */
   onClose: () => void;
+  /** Configured symbols active in the ticker strip */
   tickerSymbols: string[];
+  /** Tracked stock entities in memory */
   stocks: StockSymbol[];
+  /** Callback to persist updated symbol list */
   onUpdateTickerSymbols: (symbols: string[]) => void;
+  /** Callback when user selects an asset directly */
   onSelectSymbol: (symbol: string) => void;
 }
 
+/** Maximum allowed active ticker items in the horizontal strip */
 const MAX_TICKER_COMPANIES = 20;
 
+/**
+ * Modal dialog enabling users to add, remove, and filter assets displayed
+ * on the top continuous scrolling ticker ribbon.
+ *
+ * @param {TickerManageModalProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Configuration dialog or null when closed.
+ */
 export const TickerManageModal: React.FC<TickerManageModalProps> = ({
   isOpen,
   onClose,

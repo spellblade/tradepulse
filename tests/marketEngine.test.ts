@@ -1,3 +1,9 @@
+/**
+ * @file marketEngine.test.ts
+ * Automated Unit Test Suite for TradePulse Simulation Engine & Directory Integrity.
+ * Follows Model C test classification: pure deterministic unit tests without network or side-effects.
+ */
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateCandlesForPrice, instantiateStockFromTemplate, LISTED_COMPANIES_DIRECTORY } from '../src/data/listedCompanies';

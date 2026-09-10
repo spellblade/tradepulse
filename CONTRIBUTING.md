@@ -8,13 +8,24 @@ Please review the following guidelines before submitting your changes.
 
 ## 1. Branching Strategy
 
-We follow a Gitflow-inspired branching model:
+We follow a strict Gitflow-inspired branching model across three core branches:
 
-- `main` / `master`: Production-ready releases only. Every merge to this primary release branch is tagged with a release version (e.g. `v0.1.0`).
+- `main` / `master`: Production-ready releases only. Every merge to this primary release branch is tagged with a SemVer release version (e.g. `v0.1.0`). Merges MUST come exclusively as promotions from `staging` (or emergency `hotfix/*`).
+- `staging`: Mandatory pre-production branch for staging upcoming releases and end-to-end regression validation. Merges MUST come as promotions from `develop`.
 - `develop`: Primary integration branch for active development.
 - `feature/<feature-name>`: Feature branches branched from and merged into `develop`.
 - `fix/<bug-name>`: Bug fix branches branched from and merged into `develop`.
-- `hotfix/<issue-name>`: Critical emergency fixes branched directly from `main` (or `master`) and merged into both the primary release branch and `develop`.
+- `hotfix/<issue-name>`: Critical emergency fixes branched directly from `main` (or `master`) and merged into `main`, `staging`, and `develop`.
+
+### Merge & Promotion Rules (Branch Protection)
+
+Pull requests MUST be merged strictly following these methods:
+
+| Route | Allowed Merge Method | Rationale |
+| :--- | :--- | :--- |
+| `feature/*` or `fix/*` → `develop` | **Squash and Merge** | Keeps the integration branch history clean, collapsing micro-commits into single cohesive changesets. |
+| `develop` → `staging` | **Create a Merge Commit** | Preserves exact commit history and branch ancestry between integration and pre-production. |
+| `staging` → `main` | **Create a Merge Commit** | Retains identical histories between staging and production, ensuring release stability. |
 
 ---
 
@@ -71,7 +82,11 @@ We adhere strictly to [Conventional Commits](https://www.conventionalcommits.org
      ```bash
      npm run lint
      ```
-   - Verify application build:
+   - Run automated test suite:
+     ```bash
+     npm test
+     ```
+   - Verify production application build:
      ```bash
      npm run build
      ```
