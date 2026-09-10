@@ -186,6 +186,8 @@ export interface MarketIndex {
   change: number;
   /** Day net percentage change */
   changePercent: number;
+  /** Operational market status (open/closed) */
+  isOpen?: boolean;
 }
 
 /**

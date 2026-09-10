@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { StockSymbol, MarketExchange } from '../types';
 import { TrendingUp, TrendingDown, Settings } from 'lucide-react';
 import { TickerManageModal } from './TickerManageModal';
+import { isMarketOpen } from '../services/exchangeSchedule';
 
 /**
  * Props for the continuous horizontal ticker tape strip.
@@ -109,12 +110,13 @@ export const TickerStrip: React.FC<TickerStripProps> = ({
             <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
               {(['ALL', 'BSE', 'NSE', 'MCX'] as const).map((mkt) => {
                 const isActive = selectedMarket === mkt;
+                const marketOpen = mkt === 'ALL' ? undefined : isMarketOpen(mkt);
                 return (
                   <button
                     key={mkt}
                     id={`market-filter-${mkt.toLowerCase()}`}
                     onClick={() => onSelectMarket(mkt)}
-                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                       isActive
                         ? mkt === 'BSE'
                           ? 'bg-blue-600 text-white shadow-sm'
@@ -126,7 +128,15 @@ export const TickerStrip: React.FC<TickerStripProps> = ({
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                     }`}
                   >
-                    {mkt === 'ALL' ? 'All' : mkt}
+                    <span>{mkt === 'ALL' ? 'All' : mkt}</span>
+                    {marketOpen !== undefined && (
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          marketOpen ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'
+                        }`}
+                        title={marketOpen ? `${mkt} is Open` : `${mkt} is Closed`}
+                      />
+                    )}
                   </button>
                 );
               })}

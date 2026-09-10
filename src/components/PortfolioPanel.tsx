@@ -52,7 +52,7 @@ export const PortfolioPanel: React.FC<PortfolioPanelProps> = ({
   onRemoveHolding,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedStockSymbol, setSelectedStockSymbol] = useState(stocks[0]?.symbol || 'AAPL');
+  const [selectedStockSymbol, setSelectedStockSymbol] = useState(stocks[0]?.symbol || 'RELIANCE');
   const [newQuantity, setNewQuantity] = useState(10);
   const [newBuyPrice, setNewBuyPrice] = useState(200);
 

@@ -1,6 +1,8 @@
-import { StockSymbol, IntradayTrade, VolatilityAlert, MarketIndex, MarketActivitySpeed, CustomPriceAlert } from '../types';
+import { StockSymbol, IntradayTrade, VolatilityAlert, MarketIndex, MarketActivitySpeed, CustomPriceAlert, MarketExchange } from '../types';
 import { INITIAL_STOCKS, INITIAL_INTRADAY_TRADES, INITIAL_ALERTS, INITIAL_INDICES } from '../data/initialData';
 import { LISTED_COMPANIES_DIRECTORY, instantiateStockFromTemplate } from '../data/listedCompanies';
+import { realtimeMarketService, LiveQuote } from './realtimeMarketService';
+import { isMarketOpen, getExchangeStatus, ExchangeMarketStatus } from './exchangeSchedule';
 import confetti from 'canvas-confetti';
 
 type SubscribeCallback = (
@@ -13,8 +15,9 @@ type SubscribeCallback = (
 ) => void;
 
 /**
- * High-performance real-time simulation engine and central state coordinator for TradePulse.
- * Implements a regulated observer event bus simulating multi-exchange Indian markets (BSE, NSE, MCX).
+ * High-performance real-time market tracking and execution engine for TradePulse.
+ * Implements a regulated observer event bus integrating live real-time feeds from BSE, NSE,
+ * and MCX with official market hours scheduling and off-hours static closing governance.
  */
 export class MarketEngine {
   private stocks: StockSymbol[] = [];
@@ -25,8 +28,12 @@ export class MarketEngine {
   private subscribers: Set<SubscribeCallback> = new Set();
 
   private isRunning: boolean = true;
+  private isLiveFeedActive: boolean = true;
+  private isPracticeMode: boolean = false;
   private speed: MarketActivitySpeed = 'normal';
   private timerId: ReturnType<typeof setInterval> | null = null;
+  private syncInProgress: boolean = false;
+  private lastLiveSyncTime: number = 0;
 
   // Performance metrics
   private lastUiNotifyTime: number = Date.now();
@@ -39,9 +46,14 @@ export class MarketEngine {
     this.stocks = JSON.parse(JSON.stringify(INITIAL_STOCKS));
     this.intradayTrades = JSON.parse(JSON.stringify(INITIAL_INTRADAY_TRADES));
     this.alerts = JSON.parse(JSON.stringify(INITIAL_ALERTS));
-    this.indices = JSON.parse(JSON.stringify(INITIAL_INDICES));
+    this.indices = JSON.parse(JSON.stringify(INITIAL_INDICES)).map((idx: MarketIndex) => ({
+      ...idx,
+      isOpen: isMarketOpen(idx.exchange === 'VIX' ? 'NSE' : (idx.exchange || 'NSE')),
+    }));
 
     this.startSimulation();
+    // Fetch initial real-time market quotes asynchronously
+    this.syncWithRealMarket();
   }
 
   /**
@@ -141,17 +153,34 @@ export class MarketEngine {
     this.tickBatchCount++;
     const now = Date.now();
 
+    // 1. Periodically fetch real market quotes if live feed is enabled (every 4 seconds)
+    if (this.isLiveFeedActive && now - this.lastLiveSyncTime > 4000) {
+      this.syncWithRealMarket();
+    }
+
+    // Check exchange open states
+    const bseOpen = isMarketOpen('BSE');
+    const nseOpen = isMarketOpen('NSE');
+    const mcxOpen = isMarketOpen('MCX');
+
     /*
-     * ARCHITECTURAL INTENT: Stochastic Price Simulation
-     * Uses a discretized geometric Brownian motion model with mean-reversion drift:
-     * ΔP/P = μ*dt + σ*dW, where volatility (σ) is weighted by the asset's volatilityIndex
-     * and current engine speed. High volatility moves (>1.1%) generate instant alerts.
+     * ARCHITECTURAL INTENT: Market Hours Aware Price Evolution
+     * If the asset's exchange is CLOSED and practice mode is OFF, prices freeze at the
+     * official closing prices (as mandated by engineering requirements).
+     * If OPEN (or practice simulation is enabled), prices evolve with live feeds or gentle stochastic ticks.
      */
     this.stocks = this.stocks.map((stock) => {
-      // Geometric brownian jump with volatility index
-      const drift = 0.00005;
-      const vol = stock.volatilityIndex * (this.speed === 'hyper' ? 0.004 : 0.0025);
-      const randomNormal = (Math.random() - 0.492) * 2;
+      const isOpen = stock.exchange === 'MCX' ? mcxOpen : (stock.exchange === 'BSE' ? bseOpen : nseOpen);
+
+      // Freeze at real closing price if market is closed and practice mode is off
+      if (!isOpen && !this.isPracticeMode) {
+        return stock;
+      }
+
+      // In practice mode or live open market session, simulate micro-ticks between API syncs
+      const drift = 0.00002;
+      const vol = stock.volatilityIndex * (this.speed === 'hyper' ? 0.003 : 0.0015);
+      const randomNormal = (Math.random() - 0.495) * 2;
       const priceDeltaPercent = drift + vol * randomNormal;
 
       const oldPrice = stock.currentPrice;
@@ -162,23 +191,22 @@ export class MarketEngine {
       const newHigh = Math.max(stock.dayHigh, newPrice);
       const newLow = Math.min(stock.dayLow, newPrice);
 
-      // Append new OHLC point to history if time moved enough, or update latest bar
+      // Append or update latest bar
       const latestHistory = [...stock.history];
       if (latestHistory.length > 0) {
         const lastCandle = latestHistory[latestHistory.length - 1];
         lastCandle.close = newPrice;
         lastCandle.high = Math.max(lastCandle.high, newPrice);
         lastCandle.low = Math.min(lastCandle.low, newPrice);
-        lastCandle.volume = lastCandle.volume + Math.floor(Math.random() * 2500 + 500);
+        lastCandle.volume = lastCandle.volume + Math.floor(Math.random() * 1500 + 300);
 
-        // Calculate moving averages
         const startIdx = Math.max(0, latestHistory.length - 20);
         const subset = latestHistory.slice(startIdx);
         const sma = subset.reduce((sum, p) => sum + p.close, 0) / subset.length;
         lastCandle.sma20 = Number(sma.toFixed(2));
       }
 
-      // 2. Check for sudden price volatility alert (> 1.2% jump in single tick)
+      // Check sudden surge alert
       if (Math.abs(priceDeltaPercent) > 0.011) {
         const isSurge = priceDeltaPercent > 0;
         this.addAlert({
@@ -234,26 +262,107 @@ export class MarketEngine {
       };
     });
 
-    // 3. Update market indices slightly
+    // 2. Keep benchmark exchange indices synchronized with market hours status
     this.indices = this.indices.map((idx) => {
-      const delta = (Math.random() - 0.49) * 0.15;
-      const newValue = Number((idx.value + delta).toFixed(2));
-      const newChange = Number((idx.change + delta).toFixed(2));
-      const newPercent = Number(((newChange / (newValue - newChange)) * 100).toFixed(2));
+      const open = isMarketOpen(idx.exchange === 'VIX' ? 'NSE' : (idx.exchange || 'NSE'));
       return {
         ...idx,
-        value: newValue,
-        change: newChange,
-        changePercent: newPercent,
+        isOpen: open,
       };
     });
 
-    /*
-     * ARCHITECTURAL INTENT: Intraday Trade Auto-Exit & Risk Governance
-     * Evaluates open intraday positions against user-specified target profit thresholds.
-     * When current P&L >= targetProfitAmount, the position is automatically squared off
-     * in the order book, an execution alert is dispatched, and celebration particles trigger.
-     */
+    // 3. Evaluate Intraday Risk Governance
+    this.evaluateIntradayTrades(now);
+  }
+
+  /**
+   * Synchronizes the engine state with real-time market data across BSE, NSE, and MCX.
+   * Updates stocks, indices, and evaluates auto-exit and alert conditions against real prices.
+   */
+  public async syncWithRealMarket(): Promise<void> {
+    if (this.syncInProgress) return;
+    this.syncInProgress = true;
+    this.lastLiveSyncTime = Date.now();
+
+    try {
+      const symbolsToFetch = [
+        ...this.indices.map((i) => i.symbol),
+        ...this.stocks.map((s) => s.symbol),
+      ];
+
+      const quotes = await realtimeMarketService.fetchBatchQuotes(symbolsToFetch);
+      const now = Date.now();
+
+      // 1. Synchronize Indices
+      this.indices = this.indices.map((idx) => {
+        const quote = quotes.get(idx.symbol);
+        const open = isMarketOpen(idx.exchange === 'VIX' ? 'NSE' : (idx.exchange || 'NSE'));
+        if (quote && quote.price > 0) {
+          return {
+            ...idx,
+            value: quote.price,
+            change: quote.change,
+            changePercent: quote.changePercent,
+            isOpen: open,
+          };
+        }
+        return {
+          ...idx,
+          isOpen: open,
+        };
+      });
+
+      // 2. Synchronize Stocks & Commodities
+      this.stocks = this.stocks.map((stock) => {
+        const quote = quotes.get(stock.symbol);
+        if (!quote || quote.price <= 0) return stock;
+
+        const newPrice = quote.price;
+        const previousClose = quote.previousClose > 0 ? quote.previousClose : stock.previousClose;
+        const change = quote.change;
+        const changePercent = quote.changePercent;
+        const newHigh = Math.max(stock.dayHigh, quote.dayHigh, newPrice);
+        const newLow = stock.dayLow > 0 ? Math.min(stock.dayLow, quote.dayLow, newPrice) : quote.dayLow;
+
+        const latestHistory = [...stock.history];
+        if (latestHistory.length > 0) {
+          const lastCandle = latestHistory[latestHistory.length - 1];
+          lastCandle.close = newPrice;
+          lastCandle.high = Math.max(lastCandle.high, newPrice);
+          lastCandle.low = Math.min(lastCandle.low, newPrice);
+          if (quote.volume > 0) {
+            lastCandle.volume = quote.volume;
+          }
+        }
+
+        return {
+          ...stock,
+          currentPrice: newPrice,
+          previousClose,
+          change,
+          changePercent,
+          dayHigh: newHigh,
+          dayLow: newLow,
+          volume: quote.volume > 0 ? quote.volume : stock.volume,
+          history: latestHistory,
+        };
+      });
+
+      this.evaluateIntradayTrades(now);
+      this.notifySubscribers();
+    } catch (e) {
+      // Graceful fallback
+    } finally {
+      this.syncInProgress = false;
+    }
+  }
+
+  /**
+   * Evaluates open intraday trade positions for target profit auto-exit and stop loss triggers.
+   *
+   * @param {number} now - Current epoch timestamp.
+   */
+  private evaluateIntradayTrades(now: number) {
     let autoExitTriggered = false;
 
     this.intradayTrades = this.intradayTrades.map((trade) => {
@@ -298,16 +407,13 @@ export class MarketEngine {
           read: false,
         });
 
-        // Trigger confetti
         try {
           confetti({
             particleCount: 60,
             spread: 70,
             origin: { y: 0.6 },
           });
-        } catch (e) {
-          // Ignore if canvas isn't ready
-        }
+        } catch (e) {}
 
         return exitedTrade;
       }
@@ -348,9 +454,6 @@ export class MarketEngine {
         pnlPercent,
       };
     });
-
-    // Batched UI sync (requestAnimationFrame throttling to guarantee high FPS)
-    this.scheduleUiNotify();
   }
 
   // Ensure high-market activity never blocks the main UI thread
@@ -634,6 +737,79 @@ export class MarketEngine {
    */
   public getDirectory() {
     return LISTED_COMPANIES_DIRECTORY;
+  }
+
+  /**
+   * Retrieves live operational market hours status for a specified exchange.
+   *
+   * @param {MarketExchange} exchange - Market exchange ('BSE' | 'NSE' | 'MCX').
+   * @returns {ExchangeMarketStatus} Operational status and next session notice.
+   */
+  public getExchangeStatus(exchange: MarketExchange): ExchangeMarketStatus {
+    return getExchangeStatus(exchange);
+  }
+
+  /**
+   * Checks whether real-time market data tracking is enabled.
+   *
+   * @returns {boolean} True if live feed is enabled, false if running in purely offline mode.
+   */
+  public isLiveFeed(): boolean {
+    return this.isLiveFeedActive;
+  }
+
+  /**
+   * Toggles live feed streaming on or off.
+   *
+   * @returns {boolean} New live feed state.
+   */
+  public toggleLiveFeed(): boolean {
+    this.isLiveFeedActive = !this.isLiveFeedActive;
+    if (this.isLiveFeedActive) {
+      this.syncWithRealMarket();
+    }
+    this.notifySubscribers();
+    return this.isLiveFeedActive;
+  }
+
+  /**
+   * Checks whether off-hours practice simulation mode is enabled.
+   *
+   * @returns {boolean} True if practice mode is on.
+   */
+  public isPracticeModeActive(): boolean {
+    return this.isPracticeMode;
+  }
+
+  /**
+   * Toggles practice simulation mode during closed market hours.
+   *
+   * @returns {boolean} New practice mode state.
+   */
+  public togglePracticeMode(): boolean {
+    this.isPracticeMode = !this.isPracticeMode;
+    this.notifySubscribers();
+    return this.isPracticeMode;
+  }
+
+  /**
+   * Fetches real historical OHLC candles from Yahoo Finance to update the analytical chart.
+   *
+   * @param {string} symbol - TradePulse symbol.
+   * @param {string} [timeframe='1D'] - Chart resolution range.
+   * @returns {Promise<OHLCPoint[] | null>} Real candle series with indicator overlays.
+   */
+  public async fetchHistoricalCandles(symbol: string, timeframe: string = '1D'): Promise<OHLCPoint[] | null> {
+    const candles = await realtimeMarketService.fetchHistoricalCandles(symbol, timeframe);
+    if (candles && candles.length > 0) {
+      const stock = this.stocks.find((s) => s.symbol.toUpperCase() === symbol.toUpperCase());
+      if (stock) {
+        stock.history = candles;
+        this.notifySubscribers();
+      }
+      return candles;
+    }
+    return null;
   }
 }
 

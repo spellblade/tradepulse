@@ -138,18 +138,31 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   v{version}
                 </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  REAL-TIME
-                </span>
+                <button
+                  onClick={() => marketEngine.toggleLiveFeed()}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5 border transition-all cursor-pointer ${
+                    marketEngine.isLiveFeed()
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                  }`}
+                  title={marketEngine.isLiveFeed() ? 'Switch to Offline Practice Simulation' : 'Switch to Real-Time Market Feed'}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${marketEngine.isLiveFeed() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  {marketEngine.isLiveFeed() ? 'LIVE MARKET FEED' : 'PRACTICE MODE'}
+                </button>
               </h1>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
               <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
               <span className="font-medium text-slate-300">
-                {isRunning ? 'LIVE TICKS' : 'PAUSED'}
+                {isRunning ? (marketEngine.isLiveFeed() ? 'STREAMING REAL DATA' : 'LIVE TICKS') : 'PAUSED'}
               </span>
               <span className="hidden sm:inline text-slate-600">•</span>
               <span className="hidden sm:inline font-mono text-slate-400">{fps} FPS</span>
+              <span className="hidden md:inline text-slate-600">•</span>
+              <span className="hidden md:inline text-[10px] font-mono text-slate-400" title="BSE & NSE: 09:15-15:30 IST | MCX: 09:00-23:30 IST">
+                IST (UTC+5:30)
+              </span>
             </div>
           </div>
         </div>
@@ -241,8 +254,12 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Distinct Visual Icon beside each index */}
                   {getIndexVisualIcon(idx.symbol, idx.exchange)}
 
-                  {/* Clean text badge with NO empty oval */}
-                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold border uppercase ${getIndexBadge(idx.symbol, idx.exchange)}`}>
+                  {/* Clean text badge with market open/closed status indicator */}
+                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold border uppercase flex items-center gap-1 ${getIndexBadge(idx.symbol, idx.exchange)}`}>
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${idx.isOpen !== false ? 'bg-emerald-400' : 'bg-rose-400'}`}
+                      title={idx.isOpen !== false ? `${exchangeLabel}: Session Active (Open)` : `${exchangeLabel}: Session Inactive (Closed)`}
+                    />
                     {exchangeLabel}
                   </span>
 

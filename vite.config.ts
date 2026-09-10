@@ -17,6 +17,16 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      proxy: {
+        '/api/market': {
+          target: 'https://query1.finance.yahoo.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/market/, ''),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+        },
+      },
     },
     build: {
       chunkSizeWarningLimit: 1000,

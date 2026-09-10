@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -17,6 +17,7 @@ import {
   Clock,
   Zap,
 } from 'lucide-react';
+import { marketEngine } from '../services/marketEngine';
 
 /**
  * Props for the AnalyticalChart interactive technical charting component.
@@ -49,6 +50,22 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
   const [showSma20, setShowSma20] = useState<boolean>(true);
   const [showEma50, setShowEma50] = useState<boolean>(true);
   const [showVolume, setShowVolume] = useState<boolean>(true);
+  const [isLoadingCandles, setIsLoadingCandles] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (stock.symbol && marketEngine.isLiveFeed()) {
+      setIsLoadingCandles(true);
+      marketEngine.fetchHistoricalCandles(stock.symbol, timeframe).finally(() => {
+        if (!isCancelled) {
+          setIsLoadingCandles(false);
+        }
+      });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [stock.symbol, timeframe]);
 
   /*
    * ARCHITECTURAL INTENT: Timeframe Slicing & Candle Transform
@@ -262,6 +279,11 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
               {tf}
             </button>
           ))}
+          {isLoadingCandles && (
+            <span className="text-[10px] text-indigo-400 font-medium animate-pulse ml-1 hidden sm:inline">
+              Updating...
+            </span>
+          )}
         </div>
 
         {/* Chart View Mode (Area, Line, OHLC Candlestick) */}
