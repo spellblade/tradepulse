@@ -3,16 +3,33 @@ import { StockSymbol, MarketExchange } from '../types';
 import { TrendingUp, TrendingDown, Settings } from 'lucide-react';
 import { TickerManageModal } from './TickerManageModal';
 
+/**
+ * Props for the continuous horizontal ticker tape strip.
+ */
 interface TickerStripProps {
+  /** All stock entities tracked by the simulation engine */
   stocks: StockSymbol[];
+  /** Currently active stock symbol shown in chart */
   selectedSymbol: string;
+  /** Callback when user clicks a ticker card */
   onSelectSymbol: (symbol: string) => void;
+  /** Current exchange tab filter ('ALL' | 'BSE' | 'NSE' | 'MCX') */
   selectedMarket: 'ALL' | MarketExchange;
+  /** Callback to switch active exchange filter */
   onSelectMarket: (market: 'ALL' | MarketExchange) => void;
+  /** List of symbol tickers configured to display in the ticker tape */
   tickerSymbols: string[];
+  /** Callback when user updates ticker configuration in modal */
   onUpdateTickerSymbols: (symbols: string[]) => void;
 }
 
+/**
+ * Continuous smooth-scrolling ticker tape banner displaying live stock prices,
+ * mini trend arrows, exchange badges, and rapid chart selection controls.
+ *
+ * @param {TickerStripProps} props - Render properties.
+ * @returns {React.ReactElement} Animated horizontal ticker tape.
+ */
 export const TickerStrip: React.FC<TickerStripProps> = ({
   stocks,
   selectedSymbol,

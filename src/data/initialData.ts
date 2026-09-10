@@ -1,12 +1,25 @@
 import { StockSymbol, PortfolioHolding, IntradayTrade, VolatilityAlert, MarketIndex, OHLCPoint } from '../types';
 
-// Helper to generate realistic OHLC historical points with moving averages
+/**
+ * Generates synthetic historical OHLC price candles and calculates technical indicator overlays
+ * (SMA-20 and EMA-50) for initial simulated stock entities.
+ *
+ * @param {number} basePrice - Asset starting price in INR.
+ * @param {number} [pointsCount=40] - Number of 1-minute historical intervals.
+ * @param {number} [volatility=0.015] - Volatility multiplier for candle spread.
+ * @returns {OHLCPoint[]} Chronological sequence of OHLC points with indicators.
+ */
 function generateHistoricalOHLC(basePrice: number, pointsCount: number = 40, volatility: number = 0.015): OHLCPoint[] {
   const points: OHLCPoint[] = [];
   let currentPrice = basePrice * (1 - (pointsCount * 0.002));
   const now = Date.now();
   const intervalMs = 60 * 1000; // 1-minute candles
 
+  /*
+   * ARCHITECTURAL INTENT: Initial Synthetic Candle Construction
+   * Walks backwards from the current epoch to construct realistic historical volatility,
+   * high/low bounds, and intraday trading volumes.
+   */
   for (let i = pointsCount - 1; i >= 0; i--) {
     const timestamp = now - (i * intervalMs);
     const date = new Date(timestamp);
@@ -32,7 +45,10 @@ function generateHistoricalOHLC(basePrice: number, pointsCount: number = 40, vol
     });
   }
 
-  // Calculate SMA 20 & EMA 50
+  /*
+   * ARCHITECTURAL INTENT: Seed Moving Average Overlays
+   * Computes 20-period simple moving average and 50-period exponential moving average.
+   */
   for (let i = 0; i < points.length; i++) {
     // SMA 20
     const startIdx = Math.max(0, i - 19);
@@ -52,6 +68,9 @@ function generateHistoricalOHLC(basePrice: number, pointsCount: number = 40, vol
   return points;
 }
 
+/**
+ * Seed benchmark exchange indices and volatility metrics.
+ */
 export const INITIAL_INDICES: MarketIndex[] = [
   { symbol: 'BSE SENSEX', name: 'BSE SENSEX 30', exchange: 'BSE', value: 82365.80, change: 348.50, changePercent: 0.43 },
   { symbol: 'NIFTY 50', name: 'NSE NIFTY 50 Index', exchange: 'NSE', value: 25185.30, change: 112.40, changePercent: 0.45 },

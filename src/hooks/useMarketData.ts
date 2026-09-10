@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { marketEngine } from '../services/marketEngine';
 import { StockSymbol, IntradayTrade, VolatilityAlert, MarketIndex, MarketActivitySpeed } from '../types';
 
+/**
+ * State container interface for real-time market data consumed by UI components.
+ */
 export interface MarketDataState {
   stocks: StockSymbol[];
   trades: IntradayTrade[];
@@ -13,6 +16,12 @@ export interface MarketDataState {
   speed: MarketActivitySpeed;
 }
 
+/**
+ * Custom React hook providing reactive subscriptions to the real-time MarketEngine singleton.
+ * Automatically manages listener attachment and unsubscription on component lifecycle.
+ *
+ * @returns {MarketDataState} Reactive snapshot of active stocks, trades, alerts, indices, and engine telemetry.
+ */
 export function useMarketData(): MarketDataState {
   const [state, setState] = useState<MarketDataState>({
     stocks: marketEngine.getStocks(),

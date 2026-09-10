@@ -8,14 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Export trade book to CSV / PDF functionality.
-- Custom watchlists for derivatives and commodities.
+- Explicit GitHub Actions workflow permissions and staging branch triggers.
+- GitHub Actions automated release tagging workflow (`release.yml`).
+- Section 4.5 code commenting and inline documentation standards across `docs/coding-standards.md` and `src/services/marketEngine.ts`.
+- Pre-production `staging` branch and Ruleset merge guidelines in `CONTRIBUTING.md`.
+- Canonical `package-lock.json` dependency lockfile for deterministic `npm ci` pipelines.
 
 ### Changed
-- 
+- Synchronized `docs/universal-master-template.md` with authoritative v3.0 specification.
+- Updated `README.md` with live GitHub Actions CI badge and `.env.example` setup steps.
+- Normalized `VERSION` and `public/VERSION` to eliminate trailing whitespace.
+
+### Deprecated
+
+### Removed
+- Legacy `bun.lock` file in favor of npm standard `package-lock.json`.
 
 ### Fixed
-- 
+- Corrected missing `staging` branch references in CI pipeline and contribution guide.
+
+### Security
+- Enforced read-only permission defaults for GitHub Actions workflows.
 
 ---
 
@@ -36,6 +49,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized section header sizes and trade action buttons across long and short ticker symbols.
 - Updated application branding with a modern multi-tone candlestick pulse logo.
 
+### Deprecated
+
+### Removed
+
 ### Fixed
 - Fixed screener market filter count badges where selecting an exchange filter accidentally zeroed out counts on other market tabs.
 - Harmonized Cancel Order button colors to match the portfolio cancellation style.
+
+### Security
+
+[Unreleased]: https://github.com/spellblade/tradepulse/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/spellblade/tradepulse/releases/tag/v0.1.0

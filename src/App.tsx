@@ -24,6 +24,13 @@ import {
 import { MiniSparkline } from './components/MiniSparkline';
 import { ScreenerAddCompanyModal } from './components/ScreenerAddCompanyModal';
 
+/**
+ * Primary root layout and navigation coordinator for TradePulse.
+ * Connects the real-time simulation engine to presentation views:
+ * Trading (Charts + Intraday Terminal), Portfolio Management, and Exchange Screener.
+ *
+ * @returns {React.ReactElement} Root application layout.
+ */
 export default function App() {
   const {
     stocks,
@@ -44,7 +51,11 @@ export default function App() {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState<boolean>(false);
   const [orderInitialSymbol, setOrderInitialSymbol] = useState<string>('RELIANCE');
 
-  // Customized moving ticker symbols (max 20 companies)
+  /*
+   * ARCHITECTURAL INTENT: LocalStorage Client Persistence
+   * Loads user-customized ticker strip symbols, screener tracking lists, and portfolio
+   * holdings from browser localStorage with backward compatibility fallbacks and seed defaults.
+   */
   const [tickerSymbols, setTickerSymbols] = useState<string[]>(() => {
     const saved = localStorage.getItem('tradepulse_ticker_symbols') || localStorage.getItem('apex_pulse_ticker_symbols');
     if (saved) {

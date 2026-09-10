@@ -18,13 +18,28 @@ import {
   Zap,
 } from 'lucide-react';
 
+/**
+ * Props for the AnalyticalChart interactive technical charting component.
+ */
 interface AnalyticalChartProps {
+  /** Active stock symbol whose technical chart is being rendered */
   stock: StockSymbol;
+  /** Callback to trigger an intraday order pre-filled with this symbol */
   onOpenTradeForSymbol: (symbol: string) => void;
 }
 
+/**
+ * Visual presentation mode for the technical chart canvas.
+ */
 type ChartMode = 'area' | 'line' | 'ohlc';
 
+/**
+ * High-performance interactive financial chart powered by Recharts.
+ * Supports multi-timeframe resolution toggles, SMA-20 / EMA-50 overlays, and volume bars.
+ *
+ * @param {AnalyticalChartProps} props - Render configuration.
+ * @returns {React.ReactElement} Interactive technical chart panel.
+ */
 export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
   stock,
   onOpenTradeForSymbol,
@@ -35,7 +50,11 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
   const [showEma50, setShowEma50] = useState<boolean>(true);
   const [showVolume, setShowVolume] = useState<boolean>(true);
 
-  // Compute sliced/aggregated history based on timeframe for realistic analytical display
+  /*
+   * ARCHITECTURAL INTENT: Timeframe Slicing & Candle Transform
+   * Filters the historical OHLC sequence according to the selected timeframe resolution,
+   * calculating high, low, body boundaries, and directional bull/bear flags for Recharts.
+   */
   const chartData = useMemo(() => {
     if (!stock.history || stock.history.length === 0) return [];
 

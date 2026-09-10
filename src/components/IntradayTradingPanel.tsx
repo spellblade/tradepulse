@@ -18,12 +18,25 @@ import {
 } from 'lucide-react';
 import { SymbolSearchCombobox } from './SymbolSearchCombobox';
 
+/**
+ * Props for the IntradayTradingPanel order book and execution management panel.
+ */
 interface IntradayTradingPanelProps {
+  /** Active and closed intraday trades in the terminal */
   trades: IntradayTrade[];
+  /** Tracked stock symbols providing live mark-to-market prices */
   stocks: StockSymbol[];
+  /** Currently selected symbol in the platform view */
   selectedSymbol: string;
 }
 
+/**
+ * Real-time intraday trading terminal panel supporting position sizing, profit target auto-exit triggers,
+ * stop loss parameters, and manual square-off executions.
+ *
+ * @param {IntradayTradingPanelProps} props - Render configuration.
+ * @returns {React.ReactElement} Intraday order management console.
+ */
 export const IntradayTradingPanel: React.FC<IntradayTradingPanelProps> = ({
   trades,
   stocks,

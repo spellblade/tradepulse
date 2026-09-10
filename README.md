@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![Build Status](https://github.com/spellblade/tradepulse/actions/workflows/ci.yml/badge.svg)](https://github.com/spellblade/tradepulse/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](tsconfig.json)
 [![React](https://img.shields.io/badge/React-19.0-61dafb?logo=react)](package.json)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-38bdf8?logo=tailwindcss)](src/index.css)
@@ -43,8 +43,9 @@ Access to live, realistic exchange-grade market simulation environments for Indi
    cd tradepulse
    ```
 
-2. **Install dependencies**:
+2. **Configure environment & install dependencies**:
    ```bash
+   cp .env.example .env
    npm install
    ```
 

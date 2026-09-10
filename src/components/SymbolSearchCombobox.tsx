@@ -4,14 +4,28 @@ import { LISTED_COMPANIES_DIRECTORY } from '../data/listedCompanies';
 import { marketEngine } from '../services/marketEngine';
 import { Search, ChevronDown, Check, Building2 } from 'lucide-react';
 
+/**
+ * Props for the SymbolSearchCombobox autocomplete selector.
+ */
 interface SymbolSearchComboboxProps {
+  /** Currently selected symbol ticker */
   selectedSymbol: string;
+  /** Callback fired when a symbol is selected */
   onSelectSymbol: (symbol: string) => void;
+  /** Active stock symbols currently monitored by the engine */
   stocks: StockSymbol[];
+  /** Optional container style overrides */
   className?: string;
+  /** Optional form label displayed above input */
   label?: string;
 }
 
+/**
+ * Autocomplete searchable combobox for quick discovery across BSE, NSE, and MCX directory entities.
+ *
+ * @param {SymbolSearchComboboxProps} props - Render properties.
+ * @returns {React.ReactElement} Interactive search combobox with dropdown results.
+ */
 export const SymbolSearchCombobox: React.FC<SymbolSearchComboboxProps> = ({
   selectedSymbol,
   onSelectSymbol,

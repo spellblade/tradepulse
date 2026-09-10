@@ -13,14 +13,29 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+/**
+ * Props for the NewOrderModal dialog.
+ */
 interface NewOrderModalProps {
+  /** Modal open visibility state */
   isOpen: boolean;
+  /** Modal dismiss callback */
   onClose: () => void;
+  /** List of available stocks for order routing */
   stocks: StockSymbol[];
+  /** Optional pre-filled symbol ticker */
   initialSymbol?: string;
+  /** Callback when a delivery holding is executed */
   onAddHolding: (holding: Omit<PortfolioHolding, 'id'>) => void;
 }
 
+/**
+ * Universal trade execution modal supporting both Intraday (margin with profit-target auto-exit)
+ * and Delivery (portfolio equity acquisition) order types.
+ *
+ * @param {NewOrderModalProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Interactive order ticket dialog or null when closed.
+ */
 export const NewOrderModal: React.FC<NewOrderModalProps> = ({
   isOpen,
   onClose,

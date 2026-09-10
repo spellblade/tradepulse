@@ -20,21 +20,43 @@ import { NotificationsPopover } from './NotificationsPopover';
 import { PriceAlertsModal } from './PriceAlertsModal';
 import { useAppVersion } from '../hooks/useAppVersion';
 
+/**
+ * Props for the application top Header navigation and telemetry bar.
+ */
 interface HeaderProps {
+  /** Real-time benchmark market indices (SENSEX, NIFTY 50, iCOMDEX, VIX) */
   indices: MarketIndex[];
+  /** Current UI rendering frame-rate telemetry */
   fps: number;
+  /** Cumulative batch count of processed market ticks */
   batchCount: number;
+  /** Whether the background simulation tick loop is running */
   isRunning: boolean;
+  /** Current simulation activity speed */
   speed: MarketActivitySpeed;
+  /** Number of unread alerts for notification badge */
   unreadAlertsCount: number;
+  /** Active volatility and execution notification events */
   alerts: VolatilityAlert[];
+  /** Whether notification popover is expanded */
   isAlertsOpen: boolean;
+  /** Callback to toggle notification popover visibility */
   onToggleAlerts: () => void;
+  /** Callback to close notification popover */
   onCloseAlerts: () => void;
+  /** Callback to trigger the new trade modal */
   onOpenNewTrade: () => void;
+  /** Active stock entities for price alerts */
   stocks?: StockSymbol[];
 }
 
+/**
+ * Top application header component containing branding, live indices ribbon, simulation telemetry,
+ * activity speed controls, and alert notification triggers.
+ *
+ * @param {HeaderProps} props - Render properties.
+ * @returns {React.ReactElement} Application top bar.
+ */
 export const Header: React.FC<HeaderProps> = ({
   indices,
   fps,

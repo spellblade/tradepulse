@@ -63,16 +63,38 @@ This document outlines the coding standards, TypeScript conventions, and design 
 
 ---
 
-## 5. Automated Testing & Tagging Conventions
+## 5. Code Commenting & Inline Documentation Standards
 
-In accordance with Model D testing topology standards:
+Every developer and contributor MUST enforce clear, structured code commenting standards verified during pull request code reviews:
+
+### 5.1 Function & Public API Headers (JSDoc)
+- All public functions, classes, methods, and exported APIs/hooks **MUST** include structured JSDoc blocks (`/** ... */`).
+- Must specify `@param` annotations for arguments, `@returns` annotations describing returned objects or promises, and `@throws` if exceptions are intentionally raised.
+
+### 5.2 Block Comments for Complex Logic
+- Multi-step workflows, non-trivial mathematical formulas (such as stochastic price generation and indicator calculations), state-machine transitions, and regex patterns **MUST** be preceded by a block comment explaining the **WHY** and high-level architectural intent behind the implementation.
+
+### 5.3 Inline Comments for Non-Obvious Code
+- Use inline comments (`// ...`) sparingly to explain non-obvious line-level operations, edge-case workarounds, or platform quirks.
+- **Linter & Compiler Suppressions**: Any linter or compiler rule suppression (e.g., `// eslint-disable-next-line` or `@ts-expect-error`) **MUST** include an explanatory inline comment on the same line detailing the specific technical necessity.
+
+### 5.4 Prohibited Comment Anti-Patterns
+- **No Commented-Out Dead Code**: Obsolete code MUST be removed entirely rather than commented out; rely on Git version history for code retrieval.
+- **No Redundant Echo Comments**: Comments MUST NOT simply restate what the code clearly expresses (e.g., avoid `count += 1 // Increment count by 1`).
+- **No Stale Comments**: When updating functional code, developers MUST synchronously update or remove associated comments to prevent documentation drift.
+
+---
+
+## 6. Automated Testing & Tagging Conventions
+
+In accordance with Model C testing topology standards:
 - **`Unit`**: Pure deterministic logic tests with zero network or external dependencies (e.g., technical indicator formulas, directory integrity, simulation speed settings).
 - **`Integration`**: Tests verifying observer lifecycles, timer throttling, or local storage serialization.
 - **Test Command**: All tests are run via `npm test` (`tsx --test --test-force-exit tests/**/*.test.ts`).
 
 ---
 
-## 6. Verification Checklist Before Commits
+## 7. Verification Checklist Before Commits
 
 Before submitting a PR or pushing changes:
 1. `npm run lint`: Confirm zero TypeScript compiler warnings or errors.

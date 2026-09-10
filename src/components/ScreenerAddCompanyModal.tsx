@@ -2,14 +2,28 @@ import React, { useState } from 'react';
 import { StockSymbol } from '../types';
 import { X, Plus, Search, Check } from 'lucide-react';
 
+/**
+ * Props for the ScreenerAddCompanyModal asset universe picker.
+ */
 interface ScreenerAddCompanyModalProps {
+  /** Modal open visibility state */
   isOpen: boolean;
+  /** Modal dismiss callback */
   onClose: () => void;
+  /** All available stock and commodity entities */
   availableStocks: StockSymbol[];
+  /** Symbols already present in the user's screener table */
   activeSymbols: string[];
+  /** Callback when user adds a symbol to their screener */
   onAddSymbol: (symbol: string) => void;
 }
 
+/**
+ * Modal dialog for discovering and adding new BSE, NSE, and MCX assets to the screener watchlist.
+ *
+ * @param {ScreenerAddCompanyModalProps} props - Render configuration.
+ * @returns {React.ReactElement | null} Discovery modal dialog or null when closed.
+ */
 export const ScreenerAddCompanyModal: React.FC<ScreenerAddCompanyModalProps> = ({
   isOpen,
   onClose,
