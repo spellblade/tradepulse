@@ -36,8 +36,20 @@ export const SYMBOL_MAPPINGS: Record<string, SymbolMapping> = {
     exchange: 'BSE',
     assetType: 'INDEX',
   },
+  'SENSEX': {
+    symbol: 'SENSEX',
+    externalTicker: '^BSESN',
+    exchange: 'BSE',
+    assetType: 'INDEX',
+  },
   'NIFTY 50': {
     symbol: 'NIFTY 50',
+    externalTicker: '^NSEI',
+    exchange: 'NSE',
+    assetType: 'INDEX',
+  },
+  'NIFTY': {
+    symbol: 'NIFTY',
     externalTicker: '^NSEI',
     exchange: 'NSE',
     assetType: 'INDEX',
@@ -316,3 +328,33 @@ export function getExternalTicker(symbol: string): string {
   // Fallback heuristic: Assume NSE equity by default
   return `${symbol}.NS`;
 }
+
+/**
+ * Maps a local symbol and exchange to its corresponding Yahoo Finance query symbol.
+ *
+ * @param {string} symbol - Local TradePulse symbol.
+ * @param {MarketExchange} [exchange] - Target exchange override.
+ * @returns {string} External ticker string.
+ */
+export function mapToYahooSymbol(symbol: string, exchange?: 'BSE' | 'NSE' | 'MCX'): string {
+  if (exchange === 'BSE' && !symbol.startsWith('^') && !symbol.endsWith('.BO')) {
+    return `${symbol}.BO`;
+  }
+  return getExternalTicker(symbol);
+}
+
+/**
+ * Returns the unit conversion multiplier for commodity derivatives.
+ *
+ * @param {string} symbol - Commodity symbol.
+ * @returns {number} Multiplier to reach contract standard unit.
+ */
+export function getCommodityMultiplier(symbol: string): number {
+  return SYMBOL_MAPPINGS[symbol]?.commodityUnitMultiplier || 1;
+}
+
+/**
+ * Alias for convertCommodityToINR for backwards and testing compatibility.
+ */
+export const convertCommodityPrice = convertCommodityToINR;
+

@@ -54,15 +54,15 @@ describe('Real-Time Symbol Mapper [Unit]', () => {
 
   it('should compute valid contract unit conversions for MCX commodities in INR', () => {
     // Gold: $2700 / troy oz -> ₹ per 10 grams (approx ~₹75,000 - ₹85,000)
-    const goldInr = convertCommodityPrice(2700, 'GOLD', 86.5);
+    const goldInr = convertCommodityPrice('GOLD', 2700, 86.5);
     assert.ok(goldInr > 70000 && goldInr < 90000, `Gold INR price ${goldInr} should be realistic`);
 
     // Silver: $32 / troy oz -> ₹ per 1 kg (approx ~₹80,000 - ₹100,000)
-    const silverInr = convertCommodityPrice(32, 'SILVER', 86.5);
+    const silverInr = convertCommodityPrice('SILVER', 32, 86.5);
     assert.ok(silverInr > 70000 && silverInr < 110000, `Silver INR price ${silverInr} should be realistic`);
 
     // Crude Oil: $70 / bbl -> ₹ per barrel
-    const crudeInr = convertCommodityPrice(70, 'CRUDEOIL', 86.5);
+    const crudeInr = convertCommodityPrice('CRUDEOIL', 70, 86.5);
     assert.equal(crudeInr, 70 * 86.5);
   });
 });

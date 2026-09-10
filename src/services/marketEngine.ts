@@ -51,9 +51,12 @@ export class MarketEngine {
       isOpen: isMarketOpen(idx.exchange === 'VIX' ? 'NSE' : (idx.exchange || 'NSE')),
     }));
 
-    this.startSimulation();
-    // Fetch initial real-time market quotes asynchronously
-    this.syncWithRealMarket();
+    const isNodeTest = typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.argv?.some((a) => a.includes('--test')));
+    if (!isNodeTest) {
+      this.startSimulation();
+      // Fetch initial real-time market quotes asynchronously
+      this.syncWithRealMarket();
+    }
   }
 
   /**
@@ -136,6 +139,9 @@ export class MarketEngine {
     this.timerId = setInterval(() => {
       this.tick();
     }, interval);
+    if (this.timerId && typeof (this.timerId as any).unref === 'function') {
+      (this.timerId as any).unref();
+    }
   }
 
   /**

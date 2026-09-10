@@ -21,7 +21,7 @@ export interface ExchangeMarketStatus {
 /**
  * Known Indian national stock exchange market holidays (YYYY-MM-DD format).
  */
-const INDIAN_MARKET_HOLIDAYS = new Set([
+export const INDIAN_MARKET_HOLIDAYS = new Set([
   '2026-01-26', // Republic Day
   '2026-03-03', // Mahashivratri
   '2026-03-17', // Holi
@@ -34,6 +34,8 @@ const INDIAN_MARKET_HOLIDAYS = new Set([
   '2026-11-09', // Diwali Laxmi Pujan
   '2026-12-25', // Christmas
 ]);
+
+export const INDIAN_MARKET_HOLIDAYS_2026 = INDIAN_MARKET_HOLIDAYS;
 
 /**
  * Converts a given epoch or Date instance into Indian Standard Time (IST, UTC+05:30).
@@ -155,4 +157,30 @@ export function getExchangeStatus(exchange: MarketExchange, testDate?: Date): Ex
     currentIstTime: `${hours12} IST`,
     nextSessionNotice,
   };
+}
+
+/**
+ * Convenience helper providing IST calendar date components.
+ *
+ * @param {Date} [date=new Date()] - UTC date.
+ * @returns {{ hours: number; minutes: number; dayOfWeek: number; date: Date }} IST breakdown.
+ */
+export function getISTDate(date: Date = new Date()): { hours: number; minutes: number; dayOfWeek: number; date: Date } {
+  const ist = getIndianStandardTime(date);
+  return {
+    hours: ist.getHours(),
+    minutes: ist.getMinutes(),
+    dayOfWeek: ist.getDay(),
+    date: ist,
+  };
+}
+
+/**
+ * Retrieves human-readable notice for the next market opening session.
+ *
+ * @param {MarketExchange} exchange - Market exchange.
+ * @returns {string} Opening schedule descriptor.
+ */
+export function getNextMarketSession(exchange: MarketExchange): string {
+  return getExchangeStatus(exchange).nextSessionNotice;
 }
