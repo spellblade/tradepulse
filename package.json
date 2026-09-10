@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "tsx --test --test-force-exit tests/**/*.test.ts"
+    "test": "tsx --test --test-force-exit tests/*.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
