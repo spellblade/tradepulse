@@ -292,19 +292,21 @@ export const SYMBOL_MAPPINGS: Record<string, SymbolMapping> = {
 };
 
 /**
- * Currency conversion ticker for USD to INR.
+ * Baseline conversion multiplier constant for commodity derivatives to INR.
+ * Static constant eliminates redundant network requests for USD/INR.
  */
-export const USD_INR_TICKER = 'INR=X';
+export const BASELINE_USD_INR_RATE = 86.5;
 
 /**
- * Converts global commodity benchmark prices in USD into Indian MCX contract values in INR.
+ * Converts global commodity benchmark prices into Indian MCX contract values in INR.
+ * Uses a static conversion baseline with zero network calls or forex latency.
  *
  * @param {string} symbol - TradePulse commodity symbol.
  * @param {number} usdPrice - Global benchmark price in USD.
- * @param {number} usdInrRate - Live or fallback USD to INR exchange rate.
+ * @param {number} [usdInrRate=86.5] - Baseline USD to INR conversion rate.
  * @returns {number} Normalized price in INR matching MCX market specifications.
  */
-export function convertCommodityToINR(symbol: string, usdPrice: number, usdInrRate: number = 86.5): number {
+export function convertCommodityToINR(symbol: string, usdPrice: number, usdInrRate: number = BASELINE_USD_INR_RATE): number {
   const mapping = SYMBOL_MAPPINGS[symbol];
   if (!mapping || mapping.assetType !== 'COMMODITY') {
     return usdPrice;

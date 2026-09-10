@@ -1,4 +1,4 @@
-import { StockSymbol, IntradayTrade, VolatilityAlert, MarketIndex, MarketActivitySpeed, CustomPriceAlert, MarketExchange } from '../types';
+import { StockSymbol, IntradayTrade, VolatilityAlert, MarketIndex, MarketActivitySpeed, CustomPriceAlert, MarketExchange, OHLCPoint } from '../types';
 import { INITIAL_STOCKS, INITIAL_INTRADAY_TRADES, INITIAL_ALERTS, INITIAL_INDICES } from '../data/initialData';
 import { LISTED_COMPANIES_DIRECTORY, instantiateStockFromTemplate } from '../data/listedCompanies';
 import { realtimeMarketService, LiveQuote } from './realtimeMarketService';
@@ -159,8 +159,8 @@ export class MarketEngine {
     this.tickBatchCount++;
     const now = Date.now();
 
-    // 1. Periodically fetch real market quotes if live feed is enabled (every 4 seconds)
-    if (this.isLiveFeedActive && now - this.lastLiveSyncTime > 4000) {
+    // 1. Periodically fetch real market quotes if live feed is enabled (every 2.5 seconds)
+    if (this.isLiveFeedActive && now - this.lastLiveSyncTime > 2500) {
       this.syncWithRealMarket();
     }
 
