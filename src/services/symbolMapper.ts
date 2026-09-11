@@ -9,14 +9,14 @@ export interface SymbolMapping {
   symbol: string;
   /** External Yahoo Finance query ticker */
   externalTicker: string;
+  /** Optional dual-listed or alternate exchange ticker used if primary returns incomplete/stale data */
+  fallbackTicker?: string;
   /** Primary market exchange */
   exchange: MarketExchange | 'VIX';
   /** Asset category classification */
   assetType: 'EQUITY' | 'INDEX' | 'COMMODITY';
   /** Optional commodity trading contract unit (e.g. '/ 10g', '/ kg') */
   unit?: string;
-  /** Metric conversion multiplier to convert global benchmark units to Indian MCX contract specifications */
-  commodityUnitMultiplier?: number;
 }
 
 /**
@@ -25,8 +25,6 @@ export interface SymbolMapping {
  * Suffix conventions:
  * - National Stock Exchange of India: `.NS`
  * - Bombay Stock Exchange: `.BO`
- * - Global benchmark futures for MCX: `=F`
- * - Currency exchange rate: `INR=X`
  */
 export const SYMBOL_MAPPINGS: Record<string, SymbolMapping> = {
   // --- Benchmark Indices ---
@@ -62,12 +60,19 @@ export const SYMBOL_MAPPINGS: Record<string, SymbolMapping> = {
   },
   'MCX iCOMDEX': {
     symbol: 'MCX iCOMDEX',
-    externalTicker: 'MCX.NS', // Multi Commodity Exchange of India Ltd stock as proxy for MCX exchange breadth
+    externalTicker: 'MCX iCOMDEX',
     exchange: 'MCX',
     assetType: 'INDEX',
   },
 
   // --- NSE Equities (.NS) ---
+  'MCX': {
+    symbol: 'MCX',
+    externalTicker: 'MCX.NS',
+    fallbackTicker: 'MCX.BO',
+    exchange: 'NSE',
+    assetType: 'EQUITY',
+  },
   'RELIANCE': {
     symbol: 'RELIANCE',
     externalTicker: 'RELIANCE.NS',
@@ -92,236 +97,241 @@ export const SYMBOL_MAPPINGS: Record<string, SymbolMapping> = {
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
+  'M&M': {
+    symbol: 'M&M',
+    externalTicker: 'M&M.NS',
+    fallbackTicker: 'M&M.BO',
+    exchange: 'NSE',
+    assetType: 'EQUITY',
+  },
   'TATAMOTORS': {
     symbol: 'TATAMOTORS',
-    externalTicker: 'TATAMOTORS.NS',
+    externalTicker: 'M&M.NS',
+    fallbackTicker: 'M&M.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'ICICIBANK': {
     symbol: 'ICICIBANK',
     externalTicker: 'ICICIBANK.NS',
+    fallbackTicker: 'ICICIBANK.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'BHARTIARTL': {
     symbol: 'BHARTIARTL',
     externalTicker: 'BHARTIARTL.NS',
+    fallbackTicker: 'BHARTIARTL.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'SUNPHARMA': {
     symbol: 'SUNPHARMA',
     externalTicker: 'SUNPHARMA.NS',
+    fallbackTicker: 'SUNPHARMA.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'MARUTI': {
     symbol: 'MARUTI',
     externalTicker: 'MARUTI.NS',
+    fallbackTicker: 'MARUTI.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'BAJFINANCE': {
     symbol: 'BAJFINANCE',
     externalTicker: 'BAJFINANCE.NS',
+    fallbackTicker: 'BAJFINANCE.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'WIPRO': {
     symbol: 'WIPRO',
     externalTicker: 'WIPRO.NS',
+    fallbackTicker: 'WIPRO.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'ADANIENT': {
     symbol: 'ADANIENT',
     externalTicker: 'ADANIENT.NS',
+    fallbackTicker: 'ADANIENT.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'AXISBANK': {
     symbol: 'AXISBANK',
     externalTicker: 'AXISBANK.NS',
+    fallbackTicker: 'AXISBANK.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'KOTAKBANK': {
     symbol: 'KOTAKBANK',
     externalTicker: 'KOTAKBANK.NS',
+    fallbackTicker: 'KOTAKBANK.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
   'TATASTEEL': {
     symbol: 'TATASTEEL',
     externalTicker: 'TATASTEEL.NS',
+    fallbackTicker: 'TATASTEEL.BO',
     exchange: 'NSE',
     assetType: 'EQUITY',
   },
 
-  // --- BSE Equities (.BO) ---
+  // --- BSE Equities (.BO with dual-listed .NS fallback) ---
   'ITC': {
     symbol: 'ITC',
     externalTicker: 'ITC.BO',
+    fallbackTicker: 'ITC.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'SBIN': {
     symbol: 'SBIN',
     externalTicker: 'SBIN.BO',
+    fallbackTicker: 'SBIN.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'LT': {
     symbol: 'LT',
     externalTicker: 'LT.BO',
+    fallbackTicker: 'LT.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'TITAN': {
     symbol: 'TITAN',
     externalTicker: 'TITAN.BO',
+    fallbackTicker: 'TITAN.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'ASIANPAINT': {
     symbol: 'ASIANPAINT',
     externalTicker: 'ASIANPAINT.BO',
+    fallbackTicker: 'ASIANPAINT.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'HINDUNILVR': {
     symbol: 'HINDUNILVR',
     externalTicker: 'HINDUNILVR.BO',
+    fallbackTicker: 'HINDUNILVR.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'BAJAJ_AUTO': {
     symbol: 'BAJAJ_AUTO',
     externalTicker: 'BAJAJ-AUTO.BO',
+    fallbackTicker: 'BAJAJ-AUTO.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'NESTLEIND': {
     symbol: 'NESTLEIND',
     externalTicker: 'NESTLEIND.BO',
+    fallbackTicker: 'NESTLEIND.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'ULTRACEMCO': {
     symbol: 'ULTRACEMCO',
     externalTicker: 'ULTRACEMCO.BO',
+    fallbackTicker: 'ULTRACEMCO.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'COALINDIA': {
     symbol: 'COALINDIA',
     externalTicker: 'COALINDIA.BO',
+    fallbackTicker: 'COALINDIA.NS',
+    exchange: 'BSE',
+    assetType: 'EQUITY',
+  },
+  'DMART': {
+    symbol: 'DMART',
+    externalTicker: 'DMART.BO',
+    fallbackTicker: 'DMART.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'ZOMATO': {
     symbol: 'ZOMATO',
-    externalTicker: 'ZOMATO.BO',
+    externalTicker: 'DMART.BO',
+    fallbackTicker: 'DMART.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'JIOFIN': {
     symbol: 'JIOFIN',
     externalTicker: 'JIOFIN.BO',
+    fallbackTicker: 'JIOFIN.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'BEL': {
     symbol: 'BEL',
     externalTicker: 'BEL.BO',
+    fallbackTicker: 'BEL.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
   'TATAPOWER': {
     symbol: 'TATAPOWER',
     externalTicker: 'TATAPOWER.BO',
+    fallbackTicker: 'TATAPOWER.NS',
     exchange: 'BSE',
     assetType: 'EQUITY',
   },
 
-  // --- MCX Commodities (Futures contracts & Indian metric normalization) ---
+  // --- MCX Commodities (Indian Rupee native instruments) ---
   'GOLD': {
     symbol: 'GOLD',
-    externalTicker: 'GC=F', // Gold futures USD per troy oz
+    externalTicker: 'GOLD',
     exchange: 'MCX',
     assetType: 'COMMODITY',
     unit: '/ 10g',
-    // 1 troy oz = 31.1034768 g; 10g = 10 / 31.1034768 ≈ 0.321507 troy oz
-    commodityUnitMultiplier: 10 / 31.1034768,
   },
   'SILVER': {
     symbol: 'SILVER',
-    externalTicker: 'SI=F', // Silver futures USD per troy oz
+    externalTicker: 'SILVER',
     exchange: 'MCX',
     assetType: 'COMMODITY',
     unit: '/ kg',
-    // 1 kg = 1000g / 31.1034768 ≈ 32.1507 troy oz
-    commodityUnitMultiplier: 1000 / 31.1034768,
   },
   'CRUDEOIL': {
     symbol: 'CRUDEOIL',
-    externalTicker: 'CL=F', // Crude Oil WTI futures USD per barrel
+    externalTicker: 'CRUDEOIL',
     exchange: 'MCX',
     assetType: 'COMMODITY',
     unit: '/ bbl',
-    commodityUnitMultiplier: 1, // 1 bbl
   },
   'NATURALGAS': {
     symbol: 'NATURALGAS',
-    externalTicker: 'NG=F', // Natural Gas futures USD per mmBtu
+    externalTicker: 'NATURALGAS',
     exchange: 'MCX',
     assetType: 'COMMODITY',
     unit: '/ mmBtu',
-    commodityUnitMultiplier: 1,
   },
   'COPPER': {
     symbol: 'COPPER',
-    externalTicker: 'HG=F', // Copper futures USD per pound
+    externalTicker: 'COPPER',
     exchange: 'MCX',
     assetType: 'COMMODITY',
     unit: '/ kg',
-    // 1 kg = 2.20462 lbs
-    commodityUnitMultiplier: 2.20462,
   },
 };
-
-/**
- * Baseline conversion multiplier constant for commodity derivatives to INR.
- * Static constant eliminates redundant network requests for USD/INR.
- */
-export const BASELINE_USD_INR_RATE = 86.5;
-
-/**
- * Converts global commodity benchmark prices into Indian MCX contract values in INR.
- * Uses a static conversion baseline with zero network calls or forex latency.
- *
- * @param {string} symbol - TradePulse commodity symbol.
- * @param {number} usdPrice - Global benchmark price in USD.
- * @param {number} [usdInrRate=86.5] - Baseline USD to INR conversion rate.
- * @returns {number} Normalized price in INR matching MCX market specifications.
- */
-export function convertCommodityToINR(symbol: string, usdPrice: number, usdInrRate: number = BASELINE_USD_INR_RATE): number {
-  const mapping = SYMBOL_MAPPINGS[symbol];
-  if (!mapping || mapping.assetType !== 'COMMODITY') {
-    return usdPrice;
-  }
-
-  const multiplier = mapping.commodityUnitMultiplier || 1;
-  const inrPrice = usdPrice * multiplier * usdInrRate;
-  return Number(inrPrice.toFixed(2));
-}
 
 /**
  * Resolves the external Yahoo Finance ticker for a given TradePulse symbol.
  *
  * @param {string} symbol - TradePulse internal symbol.
- * @returns {string} External ticker (e.g. 'RELIANCE.NS', '^BSESN', 'GC=F').
+ * @returns {string} External ticker (e.g. 'RELIANCE.NS', '^BSESN', 'TATAPOWER.BO').
  */
 export function getExternalTicker(symbol: string): string {
   const mapping = SYMBOL_MAPPINGS[symbol];
@@ -346,17 +356,14 @@ export function mapToYahooSymbol(symbol: string, exchange?: 'BSE' | 'NSE' | 'MCX
 }
 
 /**
- * Returns the unit conversion multiplier for commodity derivatives.
+ * Retrieves the alternate or dual-listed ticker for a symbol if available.
  *
- * @param {string} symbol - Commodity symbol.
- * @returns {number} Multiplier to reach contract standard unit.
+ * @param {string} symbol - TradePulse internal symbol.
+ * @returns {string | undefined} Fallback ticker (e.g. '.NS' for a '.BO' equity).
  */
-export function getCommodityMultiplier(symbol: string): number {
-  return SYMBOL_MAPPINGS[symbol]?.commodityUnitMultiplier || 1;
+export function getFallbackTicker(symbol: string): string | undefined {
+  return SYMBOL_MAPPINGS[symbol]?.fallbackTicker;
 }
 
-/**
- * Alias for convertCommodityToINR for backwards and testing compatibility.
- */
-export const convertCommodityPrice = convertCommodityToINR;
+
 

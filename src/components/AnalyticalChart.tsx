@@ -16,6 +16,7 @@ import {
   TrendingDown,
   Clock,
   Zap,
+  RefreshCw,
 } from 'lucide-react';
 import { marketEngine } from '../services/marketEngine';
 
@@ -54,7 +55,7 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
 
   useEffect(() => {
     let isCancelled = false;
-    if (stock.symbol && marketEngine.isLiveFeed()) {
+    if (stock.symbol) {
       setIsLoadingCandles(true);
       marketEngine.fetchHistoricalCandles(stock.symbol, timeframe).finally(() => {
         if (!isCancelled) {
@@ -96,14 +97,25 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
     });
   }, [stock.history, timeframe]);
 
-  // Determine YAxis domain with small padding
+  // Determine YAxis domain with small padding and numerical safety guards
   const yDomain = useMemo(() => {
     if (chartData.length === 0) return ['auto', 'auto'];
-    const min = Math.min(...chartData.map((d) => Math.min(d.low, d.sma20 || d.low, d.ema50 || d.low)));
-    const max = Math.max(...chartData.map((d) => Math.max(d.high, d.sma20 || d.high, d.ema50 || d.high)));
-    const padding = (max - min) * 0.08 || 1;
+    const validLowHigh = chartData.filter(
+      (d) => typeof d.low === 'number' && !isNaN(d.low) && typeof d.high === 'number' && !isNaN(d.high) && d.low > 0 && d.high > 0
+    );
+    if (validLowHigh.length === 0) return ['auto', 'auto'];
+
+    const min = Math.min(
+      ...validLowHigh.map((d) => Math.min(d.low, typeof d.sma20 === 'number' && !isNaN(d.sma20) && d.sma20 > 0 ? d.sma20 : d.low))
+    );
+    const max = Math.max(
+      ...validLowHigh.map((d) => Math.max(d.high, typeof d.sma20 === 'number' && !isNaN(d.sma20) && d.sma20 > 0 ? d.sma20 : d.high))
+    );
+    if (!isFinite(min) || !isFinite(max) || min <= 0 || max <= 0) return ['auto', 'auto'];
+
+    const padding = (max - min) * 0.08 || min * 0.02 || 1;
     return [
-      Number((min - padding).toFixed(2)),
+      Number(Math.max(0.01, min - padding).toFixed(2)),
       Number((max + padding).toFixed(2)),
     ];
   }, [chartData]);
@@ -352,8 +364,14 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
 
       {/* Main Analytical Chart Canvas */}
       <div className="p-4 h-80 sm:h-96 w-full relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+        {chartData.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs">
+            <RefreshCw className="w-5 h-5 mb-2 animate-spin text-indigo-400" />
+            <span>Loading {timeframe} technical chart data for {stock.symbol}...</span>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
             <defs>
               <linearGradient id="colorPriceUp" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
@@ -503,6 +521,7 @@ export const AnalyticalChart: React.FC<AnalyticalChartProps> = ({
             )}
           </ComposedChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Chart Footer Indicator Guide */}

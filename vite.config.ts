@@ -28,12 +28,29 @@ function marketAggregatorPlugin(): Plugin {
   let lastUpdateTime = 0;
 
   const TRACKED_SYMBOLS = [
+    // Benchmark Indices
     '^BSESN', '^NSEI', '^INDIAVIX',
-    'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS',
+    // NSE Equities
+    'RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'M&M.NS', 'ICICIBANK.NS',
     'BHARTIARTL.NS', 'SUNPHARMA.NS', 'MARUTI.NS', 'BAJFINANCE.NS', 'WIPRO.NS',
-    'ADANIENT.NS', 'AXISBANK.NS', 'KOTAKBANK.NS', 'BOMDYEING.BO', 'TATAMOTORS.NS',
-    'ITC.NS', 'LT.NS', 'SBIN.NS',
-    'GC=F', 'SI=F', 'CL=F', 'NG=F', 'HG=F',
+    'ADANIENT.NS', 'AXISBANK.NS', 'KOTAKBANK.NS', 'TATASTEEL.NS',
+    // BSE Equities (track both .BO and .NS dual listings for 100% price coverage)
+    'ITC.BO', 'ITC.NS',
+    'SBIN.BO', 'SBIN.NS',
+    'LT.BO', 'LT.NS',
+    'TITAN.BO', 'TITAN.NS',
+    'ASIANPAINT.BO', 'ASIANPAINT.NS',
+    'HINDUNILVR.BO', 'HINDUNILVR.NS',
+    'BAJAJ-AUTO.BO', 'BAJAJ-AUTO.NS',
+    'NESTLEIND.BO', 'NESTLEIND.NS',
+    'ULTRACEMCO.BO', 'ULTRACEMCO.NS',
+    'COALINDIA.BO', 'COALINDIA.NS',
+    'DMART.BO', 'DMART.NS',
+    'JIOFIN.BO', 'JIOFIN.NS',
+    'BEL.BO', 'BEL.NS',
+    'TATAPOWER.BO', 'TATAPOWER.NS',
+    // Multi Commodity Exchange of India Ltd (NSE & BSE listings)
+    'MCX.NS', 'MCX.BO',
   ];
 
   async function fetchTicker(ticker: string): Promise<void> {
@@ -95,8 +112,19 @@ function marketAggregatorPlugin(): Plugin {
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Access-Control-Allow-Origin', '*');
 
+      const parsedUrl = new URL(url, 'http://localhost');
+      const querySymbols = parsedUrl.searchParams.get('symbols')?.split(',').filter(Boolean);
+
       if (quoteCache.size === 0) {
         await updateAllQuotes();
+      }
+
+      // If client requests specific symbols not yet in cache, fetch them on-demand
+      if (querySymbols && querySymbols.length > 0) {
+        const missing = querySymbols.filter((s) => !quoteCache.has(s));
+        if (missing.length > 0) {
+          await Promise.all(missing.map((s) => fetchTicker(s)));
+        }
       }
 
       const quotesObj: Record<string, CachedQuote> = {};

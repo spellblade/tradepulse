@@ -25,7 +25,7 @@ git --version
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/spellblade/tradepulse.git
+   git clone https://github.com/sohamray/tradepulse.git
    cd tradepulse
    ```
 

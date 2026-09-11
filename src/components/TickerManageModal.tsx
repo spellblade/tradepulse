@@ -78,7 +78,7 @@ export const TickerManageModal: React.FC<TickerManageModalProps> = ({
 
   const handleResetDefaults = () => {
     const defaultSymbols = [
-      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'TATAMOTORS', 'ICICIBANK',
+      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'M&M', 'ICICIBANK',
       'ITC', 'SBIN', 'LT', 'TITAN', 'ASIANPAINT',
       'GOLD', 'SILVER', 'CRUDEOIL'
     ];

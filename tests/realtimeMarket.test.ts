@@ -9,8 +9,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   mapToYahooSymbol,
-  getCommodityMultiplier,
-  convertCommodityPrice,
+  getExternalTicker,
+  getFallbackTicker,
 } from '../src/services/symbolMapper';
 import {
   isMarketOpen,
@@ -18,8 +18,9 @@ import {
   getNextMarketSession,
   INDIAN_MARKET_HOLIDAYS_2026,
 } from '../src/services/exchangeSchedule';
+import { realtimeMarketService } from '../src/services/realtimeMarketService';
 
-describe('Real-Time Symbol Mapper [Unit]', () => {
+describe('Real-Time Symbol Mapper & Native INR Instruments [Unit]', () => {
   it('should accurately map NSE equity symbols to .NS suffix', () => {
     assert.equal(mapToYahooSymbol('RELIANCE', 'NSE'), 'RELIANCE.NS');
     assert.equal(mapToYahooSymbol('TCS', 'NSE'), 'TCS.NS');
@@ -39,31 +40,13 @@ describe('Real-Time Symbol Mapper [Unit]', () => {
     assert.equal(mapToYahooSymbol('INDIA VIX'), '^INDIAVIX');
   });
 
-  it('should accurately map MCX commodity tickers to active futures contracts', () => {
-    assert.equal(mapToYahooSymbol('GOLD', 'MCX'), 'GC=F');
-    assert.equal(mapToYahooSymbol('SILVER', 'MCX'), 'SI=F');
-    assert.equal(mapToYahooSymbol('CRUDEOIL', 'MCX'), 'CL=F');
-    assert.equal(mapToYahooSymbol('NATURALGAS', 'MCX'), 'NG=F');
-    assert.equal(mapToYahooSymbol('COPPER', 'MCX'), 'HG=F');
-  });
-
-  it('should return 1 for standard equities without multiplier', () => {
-    assert.equal(getCommodityMultiplier('RELIANCE'), 1);
-    assert.equal(getCommodityMultiplier('TCS'), 1);
-  });
-
-  it('should compute valid contract unit conversions for MCX commodities in INR', () => {
-    // Gold: $2700 / troy oz -> ₹ per 10 grams (approx ~₹75,000 - ₹85,000)
-    const goldInr = convertCommodityPrice('GOLD', 2700, 86.5);
-    assert.ok(goldInr > 70000 && goldInr < 90000, `Gold INR price ${goldInr} should be realistic`);
-
-    // Silver: $32 / troy oz -> ₹ per 1 kg (approx ~₹80,000 - ₹100,000)
-    const silverInr = convertCommodityPrice('SILVER', 32, 86.5);
-    assert.ok(silverInr > 70000 && silverInr < 110000, `Silver INR price ${silverInr} should be realistic`);
-
-    // Crude Oil: $70 / bbl -> ₹ per barrel
-    const crudeInr = convertCommodityPrice('CRUDEOIL', 70, 86.5);
-    assert.equal(crudeInr, 70 * 86.5);
+  it('should treat MCX commodities as native INR instruments with no USD forex conversion', () => {
+    // Commodities are direct native INR symbols with zero USD forex dependency
+    assert.equal(getExternalTicker('GOLD'), 'GOLD');
+    assert.equal(getExternalTicker('SILVER'), 'SILVER');
+    assert.equal(getExternalTicker('CRUDEOIL'), 'CRUDEOIL');
+    assert.equal(getExternalTicker('NATURALGAS'), 'NATURALGAS');
+    assert.equal(getExternalTicker('COPPER'), 'COPPER');
   });
 });
 
@@ -137,5 +120,31 @@ describe('Exchange Schedule & Market Hours [Unit]', () => {
     const nextSession = getNextMarketSession('NSE');
     assert.ok(typeof nextSession === 'string');
     assert.ok(nextSession.length > 0);
+  });
+});
+
+describe('BSE 1D Historical Candles & Fallback Resolution [Unit]', () => {
+  it('should have dual-listed fallback tickers configured for BSE equities', () => {
+    const bseStocks = ['ITC', 'SBIN', 'LT', 'TITAN', 'ASIANPAINT', 'HINDUNILVR', 'BAJAJ_AUTO', 'NESTLEIND', 'ULTRACEMCO', 'COALINDIA', 'DMART', 'BEL', 'TATAPOWER'];
+    for (const sym of bseStocks) {
+      const ext = getExternalTicker(sym);
+      const fb = getFallbackTicker(sym);
+      assert.ok(ext.includes('.BO') || ext.includes('-'), `External ticker for ${sym} should be BSE: ${ext}`);
+      assert.ok(fb && fb.includes('.NS'), `Fallback ticker for ${sym} should be NSE .NS: ${fb}`);
+    }
+  });
+
+  it('should successfully generate complete 1D historical candle sequence for BSE stocks', async () => {
+    const itcCandles = await realtimeMarketService.fetchHistoricalCandles('ITC', '1D');
+    assert.ok(itcCandles && itcCandles.length >= 20, `ITC 1D candles should have >= 20 bars (received ${itcCandles?.length})`);
+
+    const sample = itcCandles[itcCandles.length - 1];
+    assert.ok(sample.timestamp > 0, 'Timestamp should be valid');
+    assert.ok(typeof sample.timeLabel === 'string' && sample.timeLabel.length > 0, 'timeLabel should be formatted date');
+    assert.ok(sample.high >= sample.low, 'High should be >= Low');
+    assert.ok(sample.open > 0 && sample.close > 0, 'Open and Close should be positive');
+    assert.ok(sample.volume >= 0, 'Volume should be non-negative');
+    assert.ok(typeof sample.sma20 === 'number' && sample.sma20 > 0, 'SMA20 should be computed');
+    assert.ok(typeof sample.ema50 === 'number' && sample.ema50 > 0, 'EMA50 should be computed');
   });
 });

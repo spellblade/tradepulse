@@ -14,7 +14,6 @@ Welcome to the comprehensive technical documentation for **TradePulse** — the 
 | [Coding Standards](coding-standards.md) | TypeScript guidelines, component patterns, Tailwind CSS rules, and accessibility standards. |
 | [Security Policy](security.md) | Local token handling, security boundaries, private disclosure SLA, & vulnerability disclosure protocols. |
 | [Architecture Decisions (ADRs)](adr/0001-record-architecture-decisions.md) | Records of major architectural selections and technology trade-offs. |
-| [Software Audit & Roadmap](roadmap.md) | Codebase audit findings, risk-gated decision matrix, and implementation roadmap. |
 | [Project Master Template](project-master-template.md) | Canonical repository master template, release checklists, and file manifest for TradePulse. |
 | [Universal Master Template](universal-master-template.md) | Generic repository master template for any software project (Java, Kotlin, TypeScript, Python, C++, HTML static). |
 

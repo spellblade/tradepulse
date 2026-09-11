@@ -69,7 +69,7 @@ export default function App() {
       }
     }
     return [
-      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'TATAMOTORS', 'ICICIBANK',
+      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'M&M', 'ICICIBANK',
       'ITC', 'SBIN', 'LT', 'TITAN', 'ASIANPAINT',
       'GOLD', 'SILVER', 'CRUDEOIL'
     ];
@@ -105,7 +105,7 @@ export default function App() {
       } catch (e) {}
     }
     return [
-      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'TATAMOTORS', 'ICICIBANK',
+      'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'M&M', 'ICICIBANK',
       'ITC', 'SBIN', 'LT', 'TITAN', 'ASIANPAINT', 'BHARTIARTL', 'MARUTI',
       'SUNPHARMA', 'WIPRO', 'BAJFINANCE', 'GOLD', 'SILVER', 'CRUDEOIL', 'COPPER'
     ];

@@ -101,4 +101,21 @@ describe('Static Data & Directory Integrity [Unit]', () => {
       assert.ok(holding.symbol.length > 0, 'Symbol must not be empty');
     }
   });
+
+  it('should include MCX stock and MCX commodities in engine stocks', () => {
+    const engine = new MarketEngine();
+    const stocks = engine.getStocks();
+
+    const mcxStock = stocks.find((s) => s.symbol === 'MCX');
+    assert.ok(mcxStock, 'MCX stock must exist in market engine');
+    assert.equal(mcxStock.exchange, 'NSE');
+    assert.ok(mcxStock.currentPrice > 0, 'MCX price must be positive');
+
+    const gold = stocks.find((s) => s.symbol === 'GOLD');
+    assert.ok(gold, 'GOLD commodity must exist in market engine');
+    assert.equal(gold.exchange, 'MCX');
+    assert.ok(gold.currentPrice > 50000, 'Gold price must be realistic in INR');
+
+    engine.stopSimulation();
+  });
 });

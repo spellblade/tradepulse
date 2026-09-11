@@ -105,35 +105,24 @@ Every release and checkout must contain these synchronized root artifacts:
 
 ## 4. Gitflow & Branching Standard
 
-TradePulse follows a strict Gitflow-inspired branching convention across three core tiers:
+TradePulse follows a Gitflow-inspired branching convention:
 
 ```text
                   v0.1.0 (Tag)             v0.2.0 (Tag)
                      ▲                        ▲
-main ────────────────●────────────────────────●────────► (Production Releases)
+main / master ───────●────────────────────────●────────► (Production Releases)
                      │ ◄── hotfix/*           │
-staging       ───────┼────────●───────────────┼────────► (Pre-production Testing)
-                     │        ▲               │
-develop       ───────┴────────┼───●───────────┴────────► (Active Integration)
-                              │   ▲
-                              └───┴─── feature/*, fix/*
+develop       ───────┴────────●───────────────┴────────► (Active Integration)
+                              ▲
+                       feature/*, fix/*
 ```
 
-### Branch Roles & Merge Rules
-- **`main` / `master`**: Production-ready code only. Direct commits are forbidden. Every merge to this branch is a **Merge Commit** from `staging` (or emergency `hotfix/*`) and tagged with an annotated SemVer tag (e.g., `git tag -a v0.1.0 -m "Release v0.1.0"`).
-- **`staging`**: Mandatory pre-production branch for staging upcoming releases and end-to-end regression validation. Merges MUST come as a **Merge Commit** from `develop`.
-- **`develop`**: Integration branch for upcoming releases. All feature and bugfix branches merge here via Pull Request using **Squash and Merge**.
+### Branch Roles
+- **`main` / `master`**: Production-ready code only. Direct commits are forbidden. Every merge to this branch is tagged with an annotated SemVer tag (e.g., `git tag -a v0.1.0 -m "Release v0.1.0"`).
+- **`develop`**: Integration branch for upcoming releases. All feature and bugfix branches merge here via Pull Request.
 - **`feature/<name>`**: New user-facing capabilities branched from and merged into `develop`.
 - **`fix/<name>`**: Bug fixes branched from and merged into `develop`.
-- **`hotfix/<name>`**: Critical emergency fixes branched directly from `main` (or `master`) and merged into `main`, `staging`, and `develop`.
-
-### Merge & Promotion Rules (Branch Protection)
-
-| Route | Allowed Merge Method | Rationale |
-| :--- | :--- | :--- |
-| `feature/*` or `fix/*` → `develop` | **Squash and Merge** | Keeps the integration branch history clean, collapsing micro-commits into single cohesive changesets. |
-| `develop` → `staging` | **Create a Merge Commit** | Preserves exact commit history and branch ancestry between integration and pre-production. |
-| `staging` → `main` | **Create a Merge Commit** | Retains identical histories between staging and production, ensuring release stability. |
+- **`hotfix/<name>`**: Critical emergency fixes branched directly from `main` (or `master`) and merged into both the primary release branch and `develop`.
 
 ---
 
@@ -168,23 +157,19 @@ TradePulse enforces [Conventional Commits](https://www.conventionalcommits.org/e
 
 ## 6. Continuous Integration & Quality Gates
 
-The GitHub Actions workflow (`.github/workflows/ci.yml`) executes on every push and pull request targeting `main`, `master`, `staging`, or `develop`:
+The GitHub Actions workflow (`.github/workflows/ci.yml`) executes on every push and pull request targeting `main`, `master`, or `develop`:
 
 1. **Matrix Validation**: Tested against Node.js `20.x` and `22.x`.
 2. **Type Check & Lint Gate**:
    ```bash
    npm run lint # Runs tsc --noEmit
    ```
-3. **Automated Test Suite Gate**:
-   ```bash
-   npm test # Runs tsx --test --test-force-exit tests/**/*.test.ts
-   ```
-4. **Production Build Gate**:
+3. **Production Build Gate**:
    ```bash
    npm run build # Compiles Vite bundle into dist/
    ```
 
-A pull request may only be merged when all linting, test, and build checks pass with 0 errors.
+A pull request may only be merged when both the linting and build checks pass with 0 errors.
 
 ---
 
@@ -193,21 +178,19 @@ A pull request may only be merged when all linting, test, and build checks pass 
 When releasing a new version of TradePulse:
 
 1. **Version Bump**:
-   - Update `VERSION` (e.g. `0.2.0`, with NO trailing newline).
-   - Update `public/VERSION` with the identical string (NO trailing newline).
+   - Update `VERSION` (e.g. `0.2.0`).
+   - Update `public/VERSION` with the identical string.
    - Update `package.json` `"version": "0.2.0"`.
 2. **Changelog**:
-   - Move entries from `[Unreleased]` to `[0.2.0] - YYYY-MM-DD` in `CHANGELOG.md`. Ensure all 6 canonical subheadings (`Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`) are maintained.
+   - Move entries from `[Unreleased]` to `[0.2.0] - YYYY-MM-DD` in `CHANGELOG.md`.
 3. **Verification**:
-   - Run `npm run lint`, `npm test`, and `npm run build`.
-4. **Promotion**:
-   - Promote `develop` to `staging` via Pull Request using **Create a Merge Commit**.
-   - Promote `staging` to `main` via Pull Request using **Create a Merge Commit**.
-5. **Git Tagging & Release**:
-   - Tag the release commit on `main`:
+   - Run `npm run lint` and `npm run build`.
+4. **Git Tagging**:
+   - Merge `develop` into `main` (or `master`).
+   - Create an annotated Git tag:
      ```bash
-     git checkout main && git pull
-     git tag -a v0.2.0 -m "Release version 0.2.0"
+     git tag -a v0.2.0 -m "Release v0.2.0"
      git push origin v0.2.0
      ```
-   - GitHub Actions `release.yml` triggers automatically on tag push to create the GitHub Release.
+5. **Deployment**:
+   - Vercel or Cloud Run automatically deploys the updated branch with zero downtime.

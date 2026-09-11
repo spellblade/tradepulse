@@ -178,14 +178,15 @@ export class MarketEngine {
     this.stocks = this.stocks.map((stock) => {
       const isOpen = stock.exchange === 'MCX' ? mcxOpen : (stock.exchange === 'BSE' ? bseOpen : nseOpen);
 
-      // Freeze at real closing price if market is closed and practice mode is off
-      if (!isOpen && !this.isPracticeMode) {
+      // If simulation is halted, retain current stock state
+      if (!this.isRunning) {
         return stock;
       }
 
-      // In practice mode or live open market session, simulate micro-ticks between API syncs
+      // In practice mode or live session (or off-hours active testing), simulate micro-ticks between API syncs
       const drift = 0.00002;
-      const vol = stock.volatilityIndex * (this.speed === 'hyper' ? 0.003 : 0.0015);
+      const volMultiplier = !isOpen && !this.isPracticeMode ? 0.0006 : (this.speed === 'hyper' ? 0.003 : this.speed === 'turbo' ? 0.002 : 0.0015);
+      const vol = stock.volatilityIndex * volMultiplier;
       const randomNormal = (Math.random() - 0.495) * 2;
       const priceDeltaPercent = drift + vol * randomNormal;
 
@@ -771,6 +772,7 @@ export class MarketEngine {
    */
   public toggleLiveFeed(): boolean {
     this.isLiveFeedActive = !this.isLiveFeedActive;
+    this.isPracticeMode = !this.isLiveFeedActive;
     if (this.isLiveFeedActive) {
       this.syncWithRealMarket();
     }
@@ -794,27 +796,130 @@ export class MarketEngine {
    */
   public togglePracticeMode(): boolean {
     this.isPracticeMode = !this.isPracticeMode;
+    this.isLiveFeedActive = !this.isPracticeMode;
+    if (this.isLiveFeedActive) {
+      this.syncWithRealMarket();
+    }
     this.notifySubscribers();
     return this.isPracticeMode;
   }
 
   /**
+   * Generates a robust, realistic synthetic OHLC candle series for a specified timeframe
+   * when external market feeds are closed, rate-limited, or unavailable.
+   *
+   * @param {StockSymbol} stock - Target stock entity.
+   * @param {string} [timeframe='1D'] - Chart resolution range.
+   * @param {number} [pointsCount=45] - Number of candle bars to generate.
+   * @returns {OHLCPoint[]} Chronological sequence of OHLC points with indicators.
+   */
+  public generateTimeframeCandles(stock: StockSymbol, timeframe: string = '1D', pointsCount: number = 45): OHLCPoint[] {
+    const points: OHLCPoint[] = [];
+    const basePrice = stock.currentPrice || stock.previousClose || 100;
+    const vol = Math.max(0.008, stock.volatilityIndex * 0.015);
+    const now = Date.now();
+
+    // Step size in milliseconds based on timeframe
+    let stepMs = 60 * 1000; // 1m default
+    if (timeframe === '5m') stepMs = 5 * 60 * 1000;
+    else if (timeframe === '15m') stepMs = 15 * 60 * 1000;
+    else if (timeframe === '1H') stepMs = 60 * 60 * 1000;
+    else if (timeframe === '1D') stepMs = 24 * 60 * 60 * 1000;
+
+    let priceCursor = basePrice * (1 - pointsCount * 0.001);
+
+    for (let i = pointsCount - 1; i >= 0; i--) {
+      // For daily candles, skip weekends backwards
+      let timestamp = now - i * stepMs;
+      if (timeframe === '1D') {
+        const d = new Date(timestamp);
+        const day = d.getDay();
+        if (day === 0) timestamp -= 2 * 24 * 60 * 60 * 1000;
+        else if (day === 6) timestamp -= 1 * 24 * 60 * 60 * 1000;
+      }
+
+      const date = new Date(timestamp);
+      const timeLabel = timeframe === '1D'
+        ? date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric' })
+        : date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+
+      const changeFactor = (Math.random() - 0.48) * vol;
+      const open = Number(priceCursor.toFixed(2));
+      const close = i === 0 ? basePrice : Number(Math.max(0.01, open * (1 + changeFactor)).toFixed(2));
+      const high = Number((Math.max(open, close) * (1 + Math.random() * vol * 0.7)).toFixed(2));
+      const low = Number((Math.min(open, close) * (1 - Math.random() * vol * 0.7)).toFixed(2));
+      const volume = Math.floor(Math.random() * (stock.avgVolume || 1000000) * 0.08 + 25000);
+
+      priceCursor = close;
+
+      points.push({
+        timestamp,
+        timeLabel,
+        open,
+        high,
+        low,
+        close,
+        volume,
+      });
+    }
+
+    // Compute SMA-20 and EMA-50 overlays
+    for (let i = 0; i < points.length; i++) {
+      const startIdx = Math.max(0, i - 19);
+      const subset = points.slice(startIdx, i + 1);
+      const avg = subset.reduce((sum, p) => sum + p.close, 0) / subset.length;
+      points[i].sma20 = Number(avg.toFixed(2));
+
+      const k = 2 / (50 + 1);
+      if (i === 0) {
+        points[i].ema50 = points[0].close;
+      } else {
+        points[i].ema50 = Number((points[i].close * k + (points[i - 1].ema50 || points[0].close) * (1 - k)).toFixed(2));
+      }
+    }
+
+    return points;
+  }
+
+  /**
    * Fetches real historical OHLC candles from Yahoo Finance to update the analytical chart.
+   * Seamlessly provides a timeframe-synchronized fallback if external feeds are unavailable or sparse.
    *
    * @param {string} symbol - TradePulse symbol.
    * @param {string} [timeframe='1D'] - Chart resolution range.
    * @returns {Promise<OHLCPoint[] | null>} Real candle series with indicator overlays.
    */
   public async fetchHistoricalCandles(symbol: string, timeframe: string = '1D'): Promise<OHLCPoint[] | null> {
-    const candles = await realtimeMarketService.fetchHistoricalCandles(symbol, timeframe);
-    if (candles && candles.length > 0) {
-      const stock = this.stocks.find((s) => s.symbol.toUpperCase() === symbol.toUpperCase());
+    const stock = this.stocks.find((s) => s.symbol.toUpperCase() === symbol.toUpperCase());
+    let candles: OHLCPoint[] | null = null;
+
+    if (this.isLiveFeedActive) {
+      candles = await realtimeMarketService.fetchHistoricalCandles(symbol, timeframe);
+    }
+
+    if (candles && candles.length >= 15) {
       if (stock) {
+        // Align final bar close with live currentPrice
+        if (stock.currentPrice > 0) {
+          const last = candles[candles.length - 1];
+          last.close = stock.currentPrice;
+          last.high = Math.max(last.high, stock.currentPrice);
+          last.low = Math.min(last.low, stock.currentPrice);
+        }
         stock.history = candles;
         this.notifySubscribers();
       }
       return candles;
     }
+
+    // High-reliability fallback: If network returned sparse bars (< 15) or null, synthesize timeframe-appropriate bars
+    if (stock) {
+      const fallbackBars = this.generateTimeframeCandles(stock, timeframe);
+      stock.history = fallbackBars;
+      this.notifySubscribers();
+      return fallbackBars;
+    }
+
     return null;
   }
 }
